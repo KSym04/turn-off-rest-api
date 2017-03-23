@@ -78,15 +78,15 @@ class turn_off_rest_api {
 
 	function disable_api_request() {
 
- 			add_filter( 'rest_authentication_errors', array($this, 'return_error') );
- 			add_filter( 'json_enabled', '__return_false' );
-    	add_filter( 'json_jsonp_enabled', '__return_false' );
-    	add_filter( 'rest_enabled', '__return_false' );
-    	add_filter( 'rest_jsonp_enabled', '__return_false' );
-    	remove_action( 'wp_head', 'rest_output_link_wp_head' );
-    	remove_action( 'wp_head', 'wp_oembed_add_discovery_links' );
-    	remove_action( 'template_redirect', 'rest_output_link_header' );
-    	remove_action( 'xmlrpc_rsd_apis', 'rest_output_rsd' );
+		add_filter( 'rest_authentication_errors', array($this, 'return_error') );
+		add_filter( 'json_enabled', '__return_false' );
+		add_filter( 'json_jsonp_enabled', '__return_false' );
+		add_filter( 'rest_enabled', '__return_false' );
+		add_filter( 'rest_jsonp_enabled', '__return_false' );
+		remove_action( 'wp_head', 'rest_output_link_wp_head' );
+		remove_action( 'wp_head', 'wp_oembed_add_discovery_links' );
+		remove_action( 'template_redirect', 'rest_output_link_header' );
+		remove_action( 'xmlrpc_rsd_apis', 'rest_output_rsd' );
 
 	}
 
@@ -101,8 +101,8 @@ class turn_off_rest_api {
 
 	function return_error() {
 		if( !is_user_logged_in() ) {
-    		return new WP_Error( 'disable', __( 'Only authenticated users allowed access to REST API.', 'turn-off-rest-api' ), array( 'status' => rest_authorization_required_code() ) );
-    }
+				return new WP_Error( 'disable', __( 'Only authenticated users allowed access to REST API.', 'turn-off-rest-api' ), array( 'status' => rest_authorization_required_code() ) );
+		}
 	}
 
 }
