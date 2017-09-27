@@ -57,22 +57,22 @@ class turn_off_rest_api {
 		$this->settings = array(
 
 			// basic
-			'name'				=> __( 'Turn Off REST API', 'turn-off-rest-api' ),
-			'version'			=> '1.0.2',
+			'name'		=> __( 'Turn Off REST API', 'turn-off-rest-api' ),
+			'version'	=> '1.0.2',
 
 			// parameters
 			'menu_slug'		=> 'turnoff_rest_api_settings',
 			'permission'	=> 'manage_options',
 
 			// path
-			'basename'		=> plugin_basename( __FILE__ ),
-			'path'				=> plugin_dir_path( __FILE__ ),
-			'dir'					=> plugin_dir_url( __FILE__ )
+			'basename'	=> plugin_basename( __FILE__ ),
+			'path'			=> plugin_dir_path( __FILE__ ),
+			'dir'				=> plugin_dir_url( __FILE__ )
 
 		);
 
 		// actions
-		add_action( 'init',	array($this, 'disable_api_request') );
+		add_action( 'init', array($this, 'disable_api_request') );
 		add_action( 'admin_menu', array($this, 'admin_page_url') );	// admin
 		add_action( 'admin_enqueue_scripts', array($this, 'admin_page_styles_scripts') ); // admin style and scripts
 
