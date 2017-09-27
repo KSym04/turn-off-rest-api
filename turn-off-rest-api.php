@@ -122,7 +122,7 @@ class turn_off_rest_api {
 	*  @date	09/27/17
 	*  @since	1.0.2
 	*/
-	
+
 	public function allowed_routes_checkpoint( $access ) {
 
 		// Return current value of $access and skip all plugin functionality
@@ -209,15 +209,15 @@ class turn_off_rest_api {
 	*  @date	09/27/17
 	*  @since	1.0.2
 	*/
-	
+
 	public function admin_page_url() {
 
-		add_options_page( 
-			esc_html__( 'Turn Off REST API / Security Settings', 'turn-off-rest-api' ), 
-			esc_html__( 'Turn Off REST API', 'turn-off-rest-api' ), 
+		add_options_page(
+			esc_html__( 'Turn Off REST API / Security Settings', 'turn-off-rest-api' ),
+			esc_html__( 'Turn Off REST API', 'turn-off-rest-api' ),
 			$this->settings['permission'], // capability
 			$this->settings['menu_slug'],  // menu slug
-			array( $this, 'admin_settings_page') 
+			array( $this, 'admin_settings_page')
 		);
 
 		add_filter( 'plugin_action_links_' . $this->settings['basename'], array($this, 'admin_settings_url') );
@@ -300,7 +300,7 @@ class turn_off_rest_api {
 	*  @date	09/27/17
 	*  @since	1.0.2
 	*/
-	
+
 	public function admin_page_styles_scripts() {
 
 		// style
@@ -322,7 +322,7 @@ class turn_off_rest_api {
 
 	private function return_error( $access ) {
 
-		$site_name = get_bloginfo( 'name' ); 
+		$site_name = get_bloginfo( 'name' );
 		$error_message = esc_html__( "Only authenticated users are allowed to access {$site_name} WP REST API.", 'turn-off-rest-api' );
 		if ( is_wp_error( $access ) ) {
 			return $access->add( 'disabled', $error_message, array( 'status' => rest_authorization_required_code() ) );

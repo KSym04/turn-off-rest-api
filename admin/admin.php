@@ -1,4 +1,4 @@
-<?php 
+<?php
 /**
  * Admin Page Settings
  *
@@ -38,12 +38,12 @@ function turn_off_rest_api_list_route_checkboxes() {
 			// build parent checkbox
 			echo "<h3>
 							<label for='parent-check-$loop_counter'>
-								<input name='rest_api_routes[]' 
-											 value='$route' 
-											 type='checkbox' 
+								<input name='rest_api_routes[]'
+											 value='$route'
+											 type='checkbox'
 											 id='parent-check-$loop_counter'
 											 data-counter='$loop_counter'
-											 $checked_prop /> 
+											 $checked_prop />
 									{$route_for_display}
 							</label>
 						</h3>
@@ -58,12 +58,12 @@ function turn_off_rest_api_list_route_checkboxes() {
 				// build child checkbox
 				echo "<li>
 								<label for='child-checkbox-{$loop_counter}'>
-									<input name='rest_api_routes[]' 
-												 value='$route' 
-												 type='checkbox' 
+									<input name='rest_api_routes[]'
+												 value='$route'
+												 type='checkbox'
 												 class='child-checkbox-{$loop_counter}'
 												 id='child-checkbox-{$loop_counter}'
-												 $checked_prop />" 
+												 $checked_prop />"
 									. esc_html( $route ) . "
 								</label>
 							</li>";
@@ -88,7 +88,7 @@ function turn_off_rest_api_get_route_checkbox_prop( $route, $allowed_list_routes
 		<?php settings_errors( 'turn-off-rest-api-notices' ); ?>
     <p>
     	<strong>
-    		<?php _e( 'Unauthorized access to WP REST API endpoints are disabled by default.', 'turn-off-rest-api' ); ?>	
+    		<?php _e( 'Unauthorized access to WP REST API endpoints are disabled by default.', 'turn-off-rest-api' ); ?>
     	</strong><br />
     	<?php _e( 'To restore default functionality and permit an access on REST API endpoints, you may check the box.', 'turn-off-rest-api' ); ?>
     </p>
