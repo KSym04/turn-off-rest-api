@@ -1,0 +1,17 @@
+/* Main CSS */
+#tora-checkbox-list ul li {
+	padding: 0 0 0 20px;
+}
+
+#tora-checkbox-list input[type="checkbox"] {
+	margin-right: 0.7em;
+}
+
+.tora-action-box__row {
+	display: block;
+	margin: 2.5em 0 0;
+}
+
+.tora-action-box__row #submit {
+	margin-right: 0.3em;
+}
