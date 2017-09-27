@@ -56,7 +56,7 @@ class turn_off_rest_api {
 		// vars
 		$this->settings = array(
 
-			// basic
+		  // basic
 			'name'		=> __( 'Turn Off REST API', 'turn-off-rest-api' ),
 			'version'	=> '1.0.2',
 
