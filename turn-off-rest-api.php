@@ -61,13 +61,13 @@ class turn_off_rest_api {
 			'version'	=> '1.0.2',
 
 			// parameters
-			'menu_slug'		=> 'turnoff_rest_api_settings',
+			'menu_slug'	=> 'turnoff_rest_api_settings',
 			'permission'	=> 'manage_options',
 
 			// path
 			'basename'	=> plugin_basename( __FILE__ ),
-			'path'			=> plugin_dir_path( __FILE__ ),
-			'dir'				=> plugin_dir_url( __FILE__ )
+			'path'	=> plugin_dir_path( __FILE__ ),
+			'dir'	=> plugin_dir_url( __FILE__ )
 
 		);
 
