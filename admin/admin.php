@@ -12,19 +12,19 @@ if( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 function turn_off_rest_api_list_route_checkboxes() {
 
 	// rest server
-	$wp_rest_server 			= rest_get_server();
-	$all_server_namespaces		= $wp_rest_server->get_namespaces();
-	$all_server_routes			= array_keys( $wp_rest_server->get_routes() );
-	$allowed_list_routes		= is_array( get_option( 'tora_allowed_route_list' ) ) ? get_option( 'tora_allowed_route_list' ) : array();
+	$wp_rest_server = rest_get_server();
+	$all_server_namespaces = $wp_rest_server->get_namespaces();
+	$all_server_routes = array_keys( $wp_rest_server->get_routes() );
+	$allowed_list_routes = is_array( get_option( 'tora_allowed_route_list' ) ) ? get_option( 'tora_allowed_route_list' ) : array();
 
 	// vars
-	$loop_counter				= 0;
-	$current_namespace 			= '';
+	$loop_counter = 0;
+	$current_namespace = '';
 
 	foreach( $all_server_routes as $route ) {
 
-		$is_route_label			= in_array( ltrim( $route, "/" ), $all_server_namespaces );
-		$checked_prop			= turn_off_rest_api_get_route_checkbox_prop( $route, $allowed_list_routes );
+		$is_route_label = in_array( ltrim( $route, "/" ), $all_server_namespaces );
+		$checked_prop = turn_off_rest_api_get_route_checkbox_prop( $route, $allowed_list_routes );
 
 		if( $is_route_label || "/" == $route ) {
 
@@ -91,20 +91,20 @@ function turn_off_rest_api_get_route_checkbox_prop( $route, $allowed_list_routes
 	<h1><?php _e( 'Turn Off REST API', 'turn-off-rest-api' ); ?></h1>
 	<?php settings_errors( 'turn-off-rest-api-notices' ); ?>
 	<p>
-		<strong>
-			<?php _e( 'Unauthorized access to WP REST API endpoints are disabled by default.', 'turn-off-rest-api' ); ?>
-		</strong><br />
-		<?php _e( 'To restore default functionality and permit an access on REST API endpoints, you may check the box.', 'turn-off-rest-api' ); ?>
+	 <strong>
+	  <?php _e( 'Unauthorized access to WP REST API endpoints are disabled by default.', 'turn-off-rest-api' ); ?>
+	 </strong><br />
+	 <?php _e( 'To restore default functionality and permit an access on REST API endpoints, you may check the box.', 'turn-off-rest-api' ); ?>
 	</p>
 
 	<form method="post" action="" id="tora-form">
 	<?php wp_nonce_field( 'turn_off_rest_api_admin_nonce' ); ?>
-		<div id="tora-checkbox-list"><?php turn_off_rest_api_list_route_checkboxes(); ?></div>
+	 <div id="tora-checkbox-list"><?php turn_off_rest_api_list_route_checkboxes(); ?></div>
 
-		<?php $reset_message = __( "Are you sure you want to restore default settings?", 'turn-off-rest-api' ); ?>
-		<div class="tora-action-box__row">
-			<?php submit_button( 'Save', 'primary', 'submit', false ); ?>
-			<?php submit_button( 'Reset', 'secondary', 'reset', false, array( 'onclick' => "return confirm('{$reset_message}');" ) ); ?>
-		</div>
+	 <?php $reset_message = __( "Are you sure you want to restore default settings?", 'turn-off-rest-api' ); ?>
+	 <div class="tora-action-box__row">
+	  <?php submit_button( 'Save', 'primary', 'submit', false ); ?>
+	  <?php submit_button( 'Reset', 'secondary', 'reset', false, array( 'onclick' => "return confirm('{$reset_message}');" ) ); ?>
+	 </div>
 	</form>
 </div>

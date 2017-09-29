@@ -132,7 +132,7 @@ class turn_off_rest_api {
 
 		$current_route = $this->get_current_route();
 
-		if( empty( $current_route ) && ! $this->is_allowed( $current_route ) ) {
+		if( !empty( $current_route ) && !$this->is_allowed( $current_route ) ) {
 			return $this->return_error( $access );
 		}
 
