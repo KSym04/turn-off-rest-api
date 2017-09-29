@@ -56,7 +56,7 @@ class turn_off_rest_api {
 		// vars
 		$this->settings = array(
 
-		  // basic
+			// basic
 			'name'		=> __( 'Turn Off REST API', 'turn-off-rest-api' ),
 			'version'	=> '1.0.2',
 
@@ -96,20 +96,20 @@ class turn_off_rest_api {
 		// detect WordPress version
 		$wordpress_current_version = get_bloginfo( 'version' );
 
-		if ( version_compare( $wordpress_current_version, '4.7', '>=' ) ) {
+		if( version_compare( $wordpress_current_version, '4.7', '>=' ) ) {
 
 			// allowed routes checkpoint
 			add_filter( 'rest_authentication_errors', array($this, 'allowed_routes_checkpoint') );
 
 		} else {
 
-	    // WP REST API v1
-	    add_filter( 'json_enabled', '__return_false' );
-	    add_filter( 'json_jsonp_enabled', '__return_false' );
+			// WP REST API v1
+			add_filter( 'json_enabled', '__return_false' );
+			add_filter( 'json_jsonp_enabled', '__return_false' );
 
-	    // WP REST API v2
-	    add_filter( 'rest_enabled', '__return_false' );
-	    add_filter( 'rest_jsonp_enabled', '__return_false' );
+			// WP REST API v2
+			add_filter( 'rest_enabled', '__return_false' );
+			add_filter( 'rest_jsonp_enabled', '__return_false' );
 
 		}
 
@@ -126,13 +126,13 @@ class turn_off_rest_api {
 	public function allowed_routes_checkpoint( $access ) {
 
 		// Return current value of $access and skip all plugin functionality
-		if ( $this->grant_rest_api() ) {
+		if( $this->grant_rest_api() ) {
 			return $access;
 		}
 
 		$current_route = $this->get_current_route();
 
-		if ( ! empty( $current_route ) && ! $this->is_allowed( $current_route ) ) {
+		if( empty( $current_route ) && ! $this->is_allowed( $current_route ) ) {
 			return $this->return_error( $access );
 		}
 
@@ -249,9 +249,9 @@ class turn_off_rest_api {
 
 	public function admin_settings_url( $url ) {
 
-	  $settings_url  = menu_page_url( $this->settings['menu_slug'], false );
-	  $settings_link = "<a href='$settings_url'>" . esc_html__( "Settings", "turn-off-rest-api" ) . "</a>";
-	  array_unshift( $url, $settings_link );
+		$settings_url  = menu_page_url( $this->settings['menu_slug'], false );
+		$settings_link = "<a href='$settings_url'>" . esc_html__( "Settings", "turn-off-rest-api" ) . "</a>";
+		array_unshift( $url, $settings_link );
 
 		return $url;
 
@@ -268,12 +268,12 @@ class turn_off_rest_api {
 	private function admin_save_settings() {
 
 		// check user capability
-		if ( ! current_user_can( $this->settings['permission'] ) ) {
+		if( !current_user_can( $this->settings['permission'] ) ) {
 			return;
 		}
 
 		// security token
-		if ( ! ( isset( $_POST['_wpnonce'] ) && check_admin_referer( 'turn_off_rest_api_admin_nonce' ) ) ) {
+		if( !( isset( $_POST['_wpnonce'] ) && check_admin_referer( 'turn_off_rest_api_admin_nonce' ) ) ) {
 			return;
 		}
 
@@ -281,7 +281,7 @@ class turn_off_rest_api {
 		$rest_api_routes = ( isset( $_POST['rest_api_routes'] ) ) ? array_map( 'esc_html', wp_unslash( $_POST['rest_api_routes'] ) ) : null;
 
 		// restore default / reset
-		if ( empty( $rest_api_routes ) || isset( $_POST['reset'] ) ) {
+		if( empty( $rest_api_routes ) || isset( $_POST['reset'] ) ) {
 			delete_option( 'tora_allowed_route_list' );
 			add_settings_error( 'turn-off-rest-api-notices', esc_attr( 'settings_updated' ), esc_html__( 'Default settings restored.' ), 'updated' );
 			return;
@@ -324,7 +324,7 @@ class turn_off_rest_api {
 
 		$site_name = get_bloginfo( 'name' );
 		$error_message = esc_html__( "Only authenticated users are allowed to access {$site_name} WP REST API.", 'turn-off-rest-api' );
-		if ( is_wp_error( $access ) ) {
+		if( is_wp_error( $access ) ) {
 			return $access->add( 'disabled', $error_message, array( 'status' => rest_authorization_required_code() ) );
 		}
 
