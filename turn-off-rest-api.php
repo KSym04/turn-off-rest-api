@@ -1,15 +1,33 @@
 <?php
 /*
 Plugin Name: Turn Off REST API
-Plugin URI: http://wordpress.dopethemes.com/turn-off-rest-api/
-Description: Turn off JSON REST API on your website to anonymous users and prevent unauthorized requests from using the REST API.
+Plugin URI: http://www.dopethemes.com/downloads/turn-off-rest-api/
+Description: This plugin prevents unauthorized requests from using the WP REST API.
 Author: DopeThemes
 Author URI: http://www.dopethemes.com/
 Text Domain: turn-off-rest-api
-Version: 1.0.2
-License: GPLv2 or later
-License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Version: 1.0.3
+License: GPL2+
+License URI: license.txt
 Domain Path: /lang
+*/
+
+/*
+    Copyright DopeThemes
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
 */
 
 if( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
@@ -58,7 +76,7 @@ class turn_off_rest_api {
 
 			// basic
 			'name'		=> __( 'Turn Off REST API', 'turn-off-rest-api' ),
-			'version'	=> '1.0.2',
+			'version'	=> '1.0.3',
 
 			// parameters
 			'menu_slug'	=> 'turnoff_rest_api_settings',
@@ -355,7 +373,7 @@ function turn_off_rest_api() {
 
 	global $turn_off_rest_api;
 
-	if( !isset($turn_off_rest_api) ) {
+	if( ! isset($turn_off_rest_api) ) {
 
 		$turn_off_rest_api = new turn_off_rest_api();
 
