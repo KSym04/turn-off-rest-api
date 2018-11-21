@@ -30,9 +30,11 @@ Domain Path: /lang
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
 */
 
-if( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+if( ! defined( 'ABSPATH' ) ) {
+    exit; // Exit if accessed directly
+}
 
-if( ! class_exists('turn_off_rest_api') ) :
+if( ! class_exists( 'turn_off_rest_api' ) ) :
 
 
 class turn_off_rest_api {
@@ -90,9 +92,9 @@ class turn_off_rest_api {
 		);
 
 		// actions
-		add_action( 'init', array($this, 'disable_api_request') );
-		add_action( 'admin_menu', array($this, 'admin_page_url') );	// admin
-		add_action( 'admin_enqueue_scripts', array($this, 'admin_page_styles_scripts') ); // admin style and scripts
+		add_action( 'init', array( $this, 'disable_api_request') );
+		add_action( 'admin_menu', array( $this, 'admin_page_url') );	// admin
+		add_action( 'admin_enqueue_scripts', array( $this, 'admin_page_styles_scripts') ); // admin style and scripts
 
 	}
 
@@ -117,7 +119,7 @@ class turn_off_rest_api {
 		if( version_compare( $wordpress_current_version, '4.7', '>=' ) ) {
 
 			// allowed routes checkpoint
-			add_filter( 'rest_authentication_errors', array($this, 'allowed_routes_checkpoint') );
+			add_filter( 'rest_authentication_errors', array( $this, 'allowed_routes_checkpoint') );
 
 		} else {
 
@@ -238,7 +240,7 @@ class turn_off_rest_api {
 			array( $this, 'admin_settings_page')
 		);
 
-		add_filter( 'plugin_action_links_' . $this->settings['basename'], array($this, 'admin_settings_url') );
+		add_filter( 'plugin_action_links_' . $this->settings['basename'], array( $this, 'admin_settings_url') );
 
 	}
 

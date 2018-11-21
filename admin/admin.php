@@ -6,7 +6,9 @@
  * @since 1.0.2
  */
 
-if( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+if( ! defined( 'ABSPATH' ) ) {
+    exit; // Exit if accessed directly
+}
 
 /* create route list with checkbox */
 function turn_off_rest_api_list_route_checkboxes() {
@@ -103,8 +105,8 @@ function turn_off_rest_api_get_route_checkbox_prop( $route, $allowed_list_routes
 
 		<?php $reset_message = __( "Are you sure you want to restore default settings?", 'turn-off-rest-api' ); ?>
 		<div class="tora-action-box__row">
-			<?php submit_button( 'Save', 'primary', 'submit', false ); ?>
-			<?php submit_button( 'Reset', 'secondary', 'reset', false, array( 'onclick' => "return confirm('{$reset_message}');" ) ); ?>
+			<?php submit_button( __( 'Save', 'turn-off-rest-api' ), 'primary', 'submit', false ); ?>
+			<?php submit_button( __( 'Reset', 'turn-off-rest-api' ), 'secondary', 'reset', false, array( 'onclick' => "return confirm('{$reset_message}');" ) ); ?>
 		</div>
 	</form>
 </div>
