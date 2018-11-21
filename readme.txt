@@ -17,6 +17,10 @@ Since the release of WordPress 4.0 came out, there have been a lot of hackers ex
 
 While WordPress REST API vulnerability exploits continue this plugin effectively prevent and disable the used of REST API from accessing information from your website, this plugin return authentication error and disable all endpoints for any user not logged in on your website.
 
+You may also send your donation for helping and supporting us to maintain free plugin releases:
+BTC: 1GJpyaLZjQ8JKaKih3UCwpuJAV15fTy9Rq
+XRP: rUd5NTLuyFGeS9HyyvHhnB4sWC5f9vWWzj
+
 = Language Support =
 
 * English (en_US)
