@@ -2,7 +2,7 @@
 Contributors: ksym04
 Tags: disable rest api, json, rest, api, admin
 Requires at least: 4.7
-Tested up to: 4.9.8
+Tested up to: 5.0.0
 Stable tag: 1.0.3
 License: GPL2+
 License URI: license.txt
