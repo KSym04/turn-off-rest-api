@@ -45,22 +45,22 @@ To test kindly log out and please go to `http://[your_website_url].com/wp-json` 
 * Tweak - Update language file
 * Tweak - Minor improvements
 
-### 1.0.3 ###
+### 1.0.3 - Nov 7, 2017 ###
 
 * Tweak - Added en_US language file
 * Tweak - Added license file
 * Tweak - Minor code clean up
 
-### 1.0.2 ###
+### 1.0.2 - Sep 27, 2017 ###
 
 * Tweak - Added endpoints admin page
 * Tweak - Minor improvements
 
-### 1.0.1 ###
+### 1.0.1 - Mar 23, 2017 ###
 
 * Tweak - Minor improvements
 * Tweak - Optimized filter implementation
 
-### 1.0.0 ###
+### 1.0.0 - Mar 23, 2017 ###
 
 * Initial Release
