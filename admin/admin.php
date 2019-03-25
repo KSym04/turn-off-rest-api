@@ -11,6 +11,7 @@ if( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly.
 /**
  * turn_off_rest_api_list_route_checkboxes
  * 
+ * @package Turn Off REST API
  * @since 1.0.0
  */
 function turn_off_rest_api_list_route_checkboxes() {
@@ -85,6 +86,7 @@ function turn_off_rest_api_list_route_checkboxes() {
 /**
  * turn_off_rest_api_get_route_checkbox_prop
  * 
+ * @package Turn Off REST API
  * @since 1.0.0
  */
 function turn_off_rest_api_get_route_checkbox_prop( $route, $allowed_list_routes ) {
