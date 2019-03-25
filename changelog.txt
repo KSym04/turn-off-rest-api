@@ -1,0 +1,23 @@
+*** Turn Off REST API Changelog ***
+
+2019.03.26 - version 1.0.4
+ * New - Update license to GPLv3
+ * Tweak - Compatibility with WP 5+
+ * Tweak - Update language file
+ * Tweak - Minor improvements
+
+2017.11.07 - version 1.0.3
+ * Tweak - Added en_US language file
+ * Tweak - Added license file
+ * Tweak - Minor code clean up
+
+2017.09.27 - version 1.0.2
+ * Tweak - Added endpoints admin page
+ * Tweak - Minor improvements
+
+2017.03.23 - version 1.0.1
+ * Tweak - Minor improvements
+ * Tweak - Optimized filter implementation
+
+2017.03.23 - version 1.0.0
+ * Initial release

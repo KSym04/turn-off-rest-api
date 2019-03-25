@@ -89,7 +89,6 @@ class turn_off_rest_api {
 	*  @date	03/23/17
 	*  @since	1.0.0
 	*/
-
 	public function disable_api_request() {
 		remove_action( 'xmlrpc_rsd_apis', 'rest_output_rsd' );
 		remove_action( 'wp_head', 'rest_output_link_wp_head' );
@@ -118,7 +117,6 @@ class turn_off_rest_api {
 	*  @date	09/27/17
 	*  @since	1.0.2
 	*/
-
 	public function allowed_routes_checkpoint( $access ) {
 		// Return current value of $access and skip all plugin functionality.
 		if( $this->grant_rest_api() ) {
@@ -140,7 +138,6 @@ class turn_off_rest_api {
 	*  @date	09/27/17
 	*  @since	1.0.2
 	*/
-
 	private function grant_rest_api() {
 		return (bool) apply_filters( 'tora_grant_rest_api', is_user_logged_in() );
 	}
