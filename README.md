@@ -1,7 +1,7 @@
 # Turn Off REST API #
 
 **Contributors:** ksym04\
-**Tags:** disable rest api, rest api, security, json, api\
+**Tags:** disable rest api, rest api, security, json, wp-json\
 **Requires at least:** 4.7\
 **Tested up to:** 7.0\
 **Requires PHP:** 7.4\
@@ -9,7 +9,7 @@
 **License:** GPLv3\
 **License URI:** [https://www.gnu.org/licenses/gpl-3.0.html](https://www.gnu.org/licenses/gpl-3.0.html)
 
-Disable the WordPress REST API for unauthenticated visitors, with a per route allow list so you decide exactly what stays open.
+Disable the WordPress REST API for logged out visitors and lock down your /wp-json endpoints, with a per route allow list so you stay in control.
 
 ## Description ##
 

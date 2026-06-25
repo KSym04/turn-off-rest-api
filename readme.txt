@@ -1,6 +1,6 @@
 === Turn Off REST API ===
 Contributors: ksym04
-Tags: disable rest api, rest api, security, json, api
+Tags: disable rest api, rest api, security, json, wp-json
 Requires at least: 4.7
 Tested up to: 7.0
 Requires PHP: 7.4
@@ -8,13 +8,20 @@ Stable tag: 1.0.5
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-Disable the WordPress REST API for unauthenticated visitors, with a per route allow list so you decide exactly what stays open.
+Disable the WordPress REST API for logged out visitors and lock down your /wp-json endpoints, with a per route allow list so you stay in control.
 
 == Description ==
 
-Turn Off REST API blocks the WordPress REST API for visitors who are not logged in. Anonymous requests to your `/wp-json` endpoints receive an authentication error instead of your site data, while logged in users and your own theme and plugins keep working normally.
+**Turn Off REST API** is a lightweight WordPress security plugin that disables the WordPress REST API for visitors who are not logged in. Anonymous requests to your `/wp-json` endpoints receive an authentication error instead of your site data, while logged in users, your theme, and your plugins keep working normally.
 
-By default WordPress exposes a lot of information through the REST API, including the list of user accounts, published content, and details about your site. For many sites that anonymous access is unnecessary and only widens the attack surface. This plugin closes it in one click and gives you a clear settings screen to reopen only the specific routes you actually need.
+By default WordPress exposes a large amount of information through the REST API, including your list of user accounts and usernames, published content, and details about your site. For most sites that open, unauthenticated access is unnecessary and only widens the attack surface for user enumeration and content scraping. Turn Off REST API closes the WordPress REST API to the public in one click, then gives you a clear settings screen to reopen only the specific REST API routes you actually need.
+
+= Why turn off the WordPress REST API? =
+
+* Stop anonymous user enumeration through `/wp-json/wp/v2/users`.
+* Reduce your attack surface against REST API based exploits and bots.
+* Keep your content and site data from being scraped through the public API.
+* Stay in control with a per route allow list instead of an all or nothing switch.
 
 = What it does =
 
