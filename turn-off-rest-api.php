@@ -6,7 +6,7 @@ Description: Prevents unauthorized requests from using the WP REST API.
 Author: DopeThemes
 Author URI: https://www.dopethemes.com/
 Text Domain: turn-off-rest-api
-Version: 1.0.5
+Version: 1.1.0
 Requires at least: 4.7
 Requires PHP: 7.4
 License: GPLv3
@@ -70,7 +70,7 @@ class turn_off_rest_api {
 		// Variables.
 		$this->settings = array(
 			'name'		 => __( 'Turn Off REST API', 'turn-off-rest-api' ),
-			'version'	 => '1.0.5',
+			'version'	 => '1.1.0',
 			'menu_slug'	 => 'turnoff_rest_api_settings',
 			'permission' => 'manage_options',
 			'basename'	 => plugin_basename( __FILE__ ),
@@ -82,6 +82,9 @@ class turn_off_rest_api {
 		add_action( 'init', array( $this, 'disable_api_request') );
 		add_action( 'admin_menu', array( $this, 'admin_page_url') );
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_page_styles_scripts') );
+
+		// Site Health transparency: explains the REST restriction so it never looks like a fault.
+		add_filter( 'site_status_tests', array( $this, 'add_site_health_test') );
 	}
 
 	/*
@@ -92,10 +95,13 @@ class turn_off_rest_api {
 	*  @since	1.0.0
 	*/
 	public function disable_api_request() {
-		remove_action( 'xmlrpc_rsd_apis', 'rest_output_rsd' );
-		remove_action( 'wp_head', 'rest_output_link_wp_head' );
-		remove_action( 'wp_head', 'wp_oembed_add_discovery_links' );
-		remove_action( 'template_redirect', 'rest_output_link_header' );
+		// Hide REST API discovery links and headers from the page source (optional, on by default).
+		if( $this->get_settings( 'hide_discovery' ) ) {
+			remove_action( 'xmlrpc_rsd_apis', 'rest_output_rsd' );
+			remove_action( 'wp_head', 'rest_output_link_wp_head' );
+			remove_action( 'wp_head', 'wp_oembed_add_discovery_links' );
+			remove_action( 'template_redirect', 'rest_output_link_header' );
+		}
 
 		// Detect WordPress version.
 		$wordpress_current_version = get_bloginfo( 'version' );
@@ -110,6 +116,65 @@ class turn_off_rest_api {
 			add_filter( 'rest_enabled', '__return_false' );
 			add_filter( 'rest_jsonp_enabled', '__return_false' );
 		}
+	}
+
+	/*
+	*  get_settings
+	*
+	*  Plugin options merged with defaults. Pass a key for a single value.
+	*
+	*  @type	function
+	*  @since	1.1.0
+	*/
+	public function get_settings( $key = '' ) {
+		$defaults = array(
+			'hide_discovery' => '1',
+		);
+		$settings = wp_parse_args( (array) get_option( 'tora_settings', array() ), $defaults );
+		if( '' !== $key ) {
+			return isset( $settings[ $key ] ) ? $settings[ $key ] : '';
+		}
+		return $settings;
+	}
+
+	/*
+	*  add_site_health_test
+	*
+	*  Registers a Site Health test so the REST restriction is explained, not mistaken for a fault.
+	*
+	*  @type	function
+	*  @since	1.1.0
+	*/
+	public function add_site_health_test( $tests ) {
+		$tests['direct']['tora_rest_restricted'] = array(
+			'label' => __( 'REST API access', 'turn-off-rest-api' ),
+			'test'  => array( $this, 'site_health_rest_test' ),
+		);
+		return $tests;
+	}
+
+	/*
+	*  site_health_rest_test
+	*
+	*  @type	function
+	*  @since	1.1.0
+	*/
+	public function site_health_rest_test() {
+		return array(
+			'label'       => __( 'The REST API is restricted to logged in users', 'turn-off-rest-api' ),
+			'status'      => 'good',
+			'badge'       => array(
+				'label' => __( 'Security', 'turn-off-rest-api' ),
+				'color' => 'blue',
+			),
+			'description' => '<p>' . esc_html__( 'Turn Off REST API is intentionally blocking the WordPress REST API for logged out visitors. Logged in users and the block editor keep full access, so this is expected and your site is working normally. You can allow specific routes under Settings, Turn Off REST API.', 'turn-off-rest-api' ) . '</p>',
+			'actions'     => sprintf(
+				'<p><a href="%1$s">%2$s</a></p>',
+				esc_url( admin_url( 'options-general.php?page=' . $this->settings['menu_slug'] ) ),
+				esc_html__( 'Review REST API settings', 'turn-off-rest-api' )
+			),
+			'test'        => 'tora_rest_restricted',
+		);
 	}
 
 	/*
@@ -250,6 +315,11 @@ class turn_off_rest_api {
 		if( !( isset( $_POST['_wpnonce'] ) && check_admin_referer( 'turn_off_rest_api_admin_nonce' ) ) ) {
 			return;
 		}
+
+		// Save plugin options.
+		$settings = $this->get_settings();
+		$settings['hide_discovery'] = isset( $_POST['tora_hide_discovery'] ) ? '1' : '0';
+		update_option( 'tora_settings', $settings );
 
 		// Get all routes.
 		// Routes are stored html-encoded on purpose: is_allowed() htmlspecialchars_decode()s

@@ -14,3 +14,5 @@ if( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 
 delete_option( 'tora_allowed_route_list' );
 delete_site_option( 'tora_allowed_route_list' );
+delete_option( 'tora_settings' );
+delete_site_option( 'tora_settings' );

@@ -114,7 +114,22 @@ function turn_off_rest_api_get_route_checkbox_prop( $route, $allowed_list_routes
 		<?php wp_nonce_field( 'turn_off_rest_api_admin_nonce' ); ?>
 
 		<div class="tora-settings-section">
+			<h2><?php esc_html_e( 'Options', 'turn-off-rest-api' ); ?></h2>
+			<p class="tora-status">
+				<span class="dashicons dashicons-yes-alt" aria-hidden="true"></span>
+				<?php esc_html_e( 'The REST API is restricted to logged in users. Your block editor and logged in users are unaffected.', 'turn-off-rest-api' ); ?>
+			</p>
+			<p>
+				<label>
+					<input type="checkbox" name="tora_hide_discovery" value="1" <?php checked( turn_off_rest_api()->get_settings( 'hide_discovery' ), '1' ); ?> />
+					<?php esc_html_e( 'Hide REST API discovery links and headers from your page source.', 'turn-off-rest-api' ); ?>
+				</label>
+			</p>
+		</div>
+
+		<div class="tora-settings-section">
 			<h2><?php esc_html_e( 'Allowed REST API Routes', 'turn-off-rest-api' ); ?></h2>
+			<p class="description"><?php esc_html_e( 'Everything is blocked for logged out visitors by default. Check a route or namespace to keep it public.', 'turn-off-rest-api' ); ?></p>
 			<div id="tora-checkbox-list"><?php turn_off_rest_api_list_route_checkboxes(); ?></div>
 		</div>
 

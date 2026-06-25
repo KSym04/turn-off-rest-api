@@ -5,7 +5,7 @@
 **Requires at least:** 4.7\
 **Tested up to:** 7.0\
 **Requires PHP:** 7.4\
-**Stable tag:** 1.0.5\
+**Stable tag:** 1.1.0\
 **License:** GPLv3\
 **License URI:** [https://www.gnu.org/licenses/gpl-3.0.html](https://www.gnu.org/licenses/gpl-3.0.html)
 
@@ -20,8 +20,9 @@ By default WordPress exposes a lot of information through the REST API, includin
 ### What it does ###
 
 * Returns an authentication error for unauthenticated REST API requests.
-* Removes the REST API discovery links from your site header and HTTP headers.
+* Optionally removes the REST API discovery links and headers from your page source.
 * Lets you build an allow list of routes that should stay public (for example a contact form or a specific integration).
+* Adds a Site Health check so the restriction is clearly explained and never mistaken for a fault.
 * Keeps the admin area, the block editor, and logged in functionality fully working.
 
 ### Built for control, not breakage ###
@@ -71,6 +72,12 @@ Yes. Open Settings, then Turn Off REST API, check the route or namespace you wan
 Yes. The plugin works at the WordPress request level and does not depend on any web server configuration files.
 
 ## Changelog ##
+
+### 1.1.0 ###
+
+* New - Site Health check that confirms the REST API is intentionally restricted, so it is never mistaken for an error.
+* New - Option to show or hide the REST API discovery links and headers in your page source.
+* Tweak - Clearer settings screen with a protection status and a dedicated options section.
 
 ### 1.0.5 ###
 

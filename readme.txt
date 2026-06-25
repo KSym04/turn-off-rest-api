@@ -4,7 +4,7 @@ Tags: disable rest api, rest api, security, json, wp-json
 Requires at least: 4.7
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.5
+Stable tag: 1.1.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -26,8 +26,9 @@ By default WordPress exposes a large amount of information through the REST API,
 = What it does =
 
 * Returns an authentication error for unauthenticated REST API requests.
-* Removes the REST API discovery links from your site header and HTTP headers.
+* Optionally removes the REST API discovery links and headers from your page source.
 * Lets you build an allow list of routes that should stay public (for example a contact form or a specific integration).
+* Adds a Site Health check so the restriction is clearly explained and never mistaken for a fault.
 * Keeps the admin area, the block editor, and logged in functionality fully working.
 
 = Built for control, not breakage =
@@ -79,6 +80,11 @@ Yes. Use the `tora_grant_rest_api` filter to return true or false based on your 
 
 == Changelog ==
 
+= 1.1.0 =
+* New - Site Health check that confirms the REST API is intentionally restricted, so it is never mistaken for an error.
+* New - Option to show or hide the REST API discovery links and headers in your page source.
+* Tweak - Clearer settings screen with a protection status and a dedicated options section.
+
 = 1.0.5 =
 * Tweak - Confirmed compatibility with WordPress 7.0.
 * Fix - PHP 8 compatibility: resolved an undefined array key warning during REST route detection.
@@ -109,6 +115,9 @@ Yes. Use the `tora_grant_rest_api` filter to return true or false based on your 
 * Initial Release
 
 == Upgrade Notice ==
+
+= 1.1.0 =
+Adds a Site Health check and an option to control the REST API discovery links and headers. A safe, additive update.
 
 = 1.0.5 =
 Compatibility and security update: PHP 8 fix, WordPress 7.0 support, and hardened admin escaping. Recommended for all users.

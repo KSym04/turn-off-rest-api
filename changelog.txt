@@ -1,5 +1,10 @@
 *** Turn Off REST API Changelog ***
 
+2026.06.25 - version 1.1.0
+ * New - Site Health check that confirms the REST API is intentionally restricted, so it is never mistaken for an error
+ * New - Option to show or hide the REST API discovery links and headers in your page source
+ * Tweak - Clearer settings screen with a protection status and a dedicated options section
+
 2026.06.25 - version 1.0.5
  * Tweak - Confirmed compatibility with WordPress 7.0
  * Fix - PHP 8 compatibility: resolved an undefined array key warning during REST route detection
