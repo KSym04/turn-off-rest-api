@@ -1,43 +1,83 @@
 === Turn Off REST API ===
 Contributors: ksym04
-Tags: disable rest api, json, rest, api, admin
+Tags: disable rest api, rest api, security, json, api
 Requires at least: 4.7
-Tested up to: 5.1
-Stable tag: 1.0.4
+Tested up to: 7.0
+Requires PHP: 7.4
+Stable tag: 1.0.5
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-Prevents unauthorized requests from using the WP REST API.
+Disable the WordPress REST API for unauthenticated visitors, with a per route allow list so you decide exactly what stays open.
 
 == Description ==
 
-Turn off JSON REST API on your website to anonymous users and prevent unauthorized requests from using the REST API to get information from your website.
+Turn Off REST API blocks the WordPress REST API for visitors who are not logged in. Anonymous requests to your `/wp-json` endpoints receive an authentication error instead of your site data, while logged in users and your own theme and plugins keep working normally.
 
-Since the release of WordPress 4.0 came out, there have been a lot of hackers exploiting the vulnerabilities of the REST API. By installing this plugin, you will effectively prevent and disable the use of REST API from unauthorized users and protect the information on your website from being accessible. If someone tries to access the REST API on your site, the plugin will return an authentication error on the API endpoints, for any unauthorized users trying to access it.
+By default WordPress exposes a lot of information through the REST API, including the list of user accounts, published content, and details about your site. For many sites that anonymous access is unnecessary and only widens the attack surface. This plugin closes it in one click and gives you a clear settings screen to reopen only the specific routes you actually need.
 
-While WordPress REST API vulnerability exploits continue this plugin effectively prevent and disable the used of REST API from accessing information from your website, this plugin return authentication error and disable all endpoints for any user not logged in on your website.
+= What it does =
+
+* Returns an authentication error for unauthenticated REST API requests.
+* Removes the REST API discovery links from your site header and HTTP headers.
+* Lets you build an allow list of routes that should stay public (for example a contact form or a specific integration).
+* Keeps the admin area, the block editor, and logged in functionality fully working.
+
+= Built for control, not breakage =
+
+Some security plugins disable the REST API completely and break the block editor or third party integrations in the process. Turn Off REST API only blocks unauthenticated access, and the per route allow list means you can whitelist exactly the endpoints a service needs without opening the whole API back up.
+
+= Developer friendly =
+
+The access decision runs through the `tora_grant_rest_api` filter, so developers can extend or override the logic for custom roles, application passwords, or trusted requests.
 
 == Installation ==
 
-1. Download the plugin via WordPress.org
-2. Upload the `turn-off-rest-api` directory to the `/wp-content/plugins/` directory via FTP
-3. Activate the plugin through the 'Plugins' menu in WordPress
+1. In your WordPress admin, go to Plugins, then Add New.
+2. Search for "Turn Off REST API".
+3. Click Install Now, then Activate.
+4. Go to Settings, then Turn Off REST API to review the route allow list. Unauthenticated access is disabled by default, so there is nothing else you need to do.
+
+Manual installation:
+
+1. Download the plugin zip from WordPress.org.
+2. Upload the `turn-off-rest-api` folder to `/wp-content/plugins/`.
+3. Activate the plugin through the Plugins menu in WordPress.
 
 == Frequently Asked Questions ==
 
-= How may I know if the plugin is working and my WP REST API is secured? =
+= How do I confirm the REST API is blocked? =
 
-To test kindly log out and please go to http://[your_website_url].com/wp-json and check if REST API will return an error that reads 'Only authenticated users are allowed an access on REST API'
+Log out of your site (or open a private browser window) and visit `https://your-site.com/wp-json`. You should see an authentication error instead of a list of routes and data. Logged in users will still see the normal response.
+
+= Will this break the block editor (Gutenberg)? =
+
+No. The block editor runs as a logged in user, so it keeps full REST API access. Only unauthenticated requests are blocked.
+
+= I need one endpoint to stay public. Can I allow just that route? =
+
+Yes. Open Settings, then Turn Off REST API, check the route or namespace you want to keep open, and save. Everything else stays blocked.
+
+= Does it work on nginx as well as Apache? =
+
+Yes. The plugin works at the WordPress request level and does not depend on any web server configuration files.
+
+= Can developers customize who is allowed? =
+
+Yes. Use the `tora_grant_rest_api` filter to return true or false based on your own logic. By default it returns whether the current user is logged in.
 
 == Screenshots ==
 
-1. Test if the wp-json is secured from unauthorized access.
-
-== Translations ==
-
-* English (en_US)
+1. The settings screen, where you can allow specific REST API routes while everything else stays blocked.
 
 == Changelog ==
+
+= 1.0.5 =
+* Tweak - Confirmed compatibility with WordPress 7.0.
+* Fix - PHP 8 compatibility: resolved an undefined array key warning during REST route detection.
+* Fix - Hardened output escaping on the settings screen.
+* Fix - Corrected the internationalization of the authentication error message.
+* Tweak - Added Requires PHP header and refreshed the plugin documentation.
 
 = 1.0.4 =
 * New - Update license to GPLv3
@@ -60,3 +100,8 @@ To test kindly log out and please go to http://[your_website_url].com/wp-json an
 
 = 1.0.0 =
 * Initial Release
+
+== Upgrade Notice ==
+
+= 1.0.5 =
+Compatibility and security update: PHP 8 fix, WordPress 7.0 support, and hardened admin escaping. Recommended for all users.

@@ -1,5 +1,12 @@
 *** Turn Off REST API Changelog ***
 
+2026.06.25 - version 1.0.5
+ * Tweak - Confirmed compatibility with WordPress 7.0
+ * Fix - PHP 8 compatibility: resolved an undefined array key warning during REST route detection
+ * Fix - Hardened output escaping on the settings screen
+ * Fix - Corrected the internationalization of the authentication error message
+ * Tweak - Added Requires PHP header and refreshed the plugin documentation
+
 2019.03.26 - version 1.0.4
  * New - Update license to GPLv3
  * Tweak - Compatibility with WP 5+

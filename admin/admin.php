@@ -16,71 +16,69 @@ if( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly.
  */
 function turn_off_rest_api_list_route_checkboxes() {
 	// Rest server.
-	$wp_rest_server = rest_get_server();
+	$wp_rest_server        = rest_get_server();
 	$all_server_namespaces = $wp_rest_server->get_namespaces();
-	$all_server_routes = array_keys( $wp_rest_server->get_routes() );
-	$allowed_list_routes = is_array( get_option( 'tora_allowed_route_list' ) ) ? get_option( 'tora_allowed_route_list' ) : array();
+	$all_server_routes     = array_keys( $wp_rest_server->get_routes() );
+	$allowed_list_routes   = is_array( get_option( 'tora_allowed_route_list' ) ) ? get_option( 'tora_allowed_route_list' ) : array();
 
-	// Vars.
+	// Markup allowed through wp_kses at output time.
+	$allowed_html = array(
+		'h3'     => array(),
+		'ul'     => array( 'id' => array() ),
+		'li'     => array(),
+		'label'  => array( 'for' => array() ),
+		'strong' => array(),
+		'input'  => array(
+			'name'         => array(),
+			'value'        => array(),
+			'type'         => array(),
+			'id'           => array(),
+			'class'        => array(),
+			'data-counter' => array(),
+			'checked'      => array(),
+		),
+	);
+
 	$loop_counter = 0;
-	$current_namespace = '';
+	$output       = '';
 
 	foreach( $all_server_routes as $route ) {
 
-		$is_route_label = in_array( ltrim( $route, "/" ), $all_server_namespaces );
-		$checked_prop = turn_off_rest_api_get_route_checkbox_prop( $route, $allowed_list_routes );
+		$is_route_label = in_array( ltrim( $route, '/' ), $all_server_namespaces, true );
+		$checked_prop   = turn_off_rest_api_get_route_checkbox_prop( $route, $allowed_list_routes );
+		$counter        = (int) $loop_counter;
+		$route_attr     = esc_attr( $route );
 
-		if( $is_route_label || "/" == $route ) {
+		if( $is_route_label || '/' === $route ) {
 
-			$current_namespace = $route;
-
-			if( 0 != $loop_counter ) {
-				echo "</ul>";
+			if( 0 !== $loop_counter ) {
+				$output .= '</ul>';
 			}
 
-			$route_for_display = ( "/" == $route ) ? sprintf( '<strong>%s</strong>', esc_html__( 'WP REST API root', 'turn-off-rest-api' ) ) : esc_html( $route );
+			$route_for_display = ( '/' === $route )
+				? '<strong>' . esc_html__( 'WP REST API root', 'turn-off-rest-api' ) . '</strong>'
+				: esc_html( $route );
 
-			// build parent checkbox
-			echo "
-				<h3>
-					<label for='parent-check-$loop_counter'>
-						<input name='rest_api_routes[]'
-							value='$route'
-							type='checkbox'
-							id='parent-check-$loop_counter'
-							data-counter='$loop_counter'
-							$checked_prop />
-								{$route_for_display}
-					</label>
-				</h3>
-					<ul id='child-check-$loop_counter'>
-				";
+			$output .= "<h3><label for='parent-check-{$counter}'>"
+				. "<input name='rest_api_routes[]' value='{$route_attr}' type='checkbox' id='parent-check-{$counter}' data-counter='{$counter}' {$checked_prop} /> "
+				. "{$route_for_display}</label></h3><ul id='child-check-{$counter}'>";
 
 			// Main WP API Root.
-			if( "/" == $route ) {
-				printf( '<li>%1$s <strong>%2$s</strong></li>', esc_html__( 'Root URL: ', 'turn-off-rest-api' ), rest_url() );
+			if( '/' === $route ) {
+				$output .= '<li>' . esc_html__( 'Root URL:', 'turn-off-rest-api' ) . ' <strong>' . esc_url( rest_url() ) . '</strong></li>';
 			}
-
 		} else {
-			// Build child checkbox.
-			echo "
-				<li>
-					<label for='child-checkbox-{$loop_counter}'>
-						<input name='rest_api_routes[]'
-							value='$route'
-							type='checkbox'
-							class='child-checkbox-{$loop_counter}'
-							id='child-checkbox-{$loop_counter}'
-							$checked_prop />"
-								. esc_html( $route ) . "
-					</label>
-				</li>";
+			$output .= "<li><label for='child-checkbox-{$counter}'>"
+				. "<input name='rest_api_routes[]' value='{$route_attr}' type='checkbox' class='child-checkbox-{$counter}' id='child-checkbox-{$counter}' {$checked_prop} /> "
+				. esc_html( $route ) . '</label></li>';
 		}
 
 		$loop_counter++;
 	}
 
-	echo "</ul>";
+	$output .= '</ul>';
+
+	echo wp_kses( $output, $allowed_html );
 }
 
 /**
@@ -96,24 +94,33 @@ function turn_off_rest_api_get_route_checkbox_prop( $route, $allowed_list_routes
 
 } ?>
 
-<div class="tora-settings-page wrap">
-	<h1><?php esc_html_e( 'Turn Off REST API', 'turn-off-rest-api' ); ?></h1>
+<div class="wrap tora-wrap">
+	<h1 class="tora-page-title">
+		<span class="dashicons dashicons-shield-alt tora-page-icon" aria-hidden="true"></span>
+		<span class="tora-wordmark"><?php esc_html_e( 'Turn Off REST API', 'turn-off-rest-api' ); ?></span>
+		<span class="tora-page-subtitle"><?php esc_html_e( 'Security Settings', 'turn-off-rest-api' ); ?></span>
+	</h1>
+
 	<?php settings_errors( 'turn-off-rest-api-notices' ); ?>
-	<p>
-		<strong>
-		<?php esc_html_e( 'Unauthorized access to WP REST API endpoints are disabled by default.', 'turn-off-rest-api' ); ?>
-		</strong><br />
-		<?php esc_html_e( 'To restore default functionality and permit an access on REST API endpoints, you may check the box.', 'turn-off-rest-api' ); ?>
-	</p>
+
+	<div class="tora-callout">
+		<p>
+			<strong><?php esc_html_e( 'Unauthenticated access to the WP REST API is disabled by default.', 'turn-off-rest-api' ); ?></strong><br />
+			<?php esc_html_e( 'Logged in users are unaffected. To keep a specific route or namespace public, check it below and save.', 'turn-off-rest-api' ); ?>
+		</p>
+	</div>
 
 	<form method="post" action="" id="tora-form">
-	<?php wp_nonce_field( 'turn_off_rest_api_admin_nonce' ); ?>
-		<div id="tora-checkbox-list"><?php turn_off_rest_api_list_route_checkboxes(); ?></div>
+		<?php wp_nonce_field( 'turn_off_rest_api_admin_nonce' ); ?>
 
-		<?php $reset_message = esc_html__( "Are you sure you want to restore default settings?", 'turn-off-rest-api' ); ?>
+		<div class="tora-settings-section">
+			<h2><?php esc_html_e( 'Allowed REST API Routes', 'turn-off-rest-api' ); ?></h2>
+			<div id="tora-checkbox-list"><?php turn_off_rest_api_list_route_checkboxes(); ?></div>
+		</div>
+
 		<div class="tora-action-box__row">
-			<?php submit_button( esc_html__( 'Save', 'turn-off-rest-api' ), 'primary', 'submit', false ); ?>
-			<?php submit_button( esc_html__( 'Reset', 'turn-off-rest-api' ), 'secondary', 'reset', false, array( 'onclick' => "return confirm('{$reset_message}');" ) ); ?>
+			<?php submit_button( esc_html__( 'Save Changes', 'turn-off-rest-api' ), 'primary', 'submit', false ); ?>
+			<?php submit_button( esc_html__( 'Reset', 'turn-off-rest-api' ), 'secondary', 'reset', false, array( 'onclick' => "return confirm('" . esc_js( __( 'Are you sure you want to restore default settings?', 'turn-off-rest-api' ) ) . "');" ) ); ?>
 		</div>
 	</form>
 </div>

@@ -6,7 +6,9 @@ Description: Prevents unauthorized requests from using the WP REST API.
 Author: DopeThemes
 Author URI: https://www.dopethemes.com/
 Text Domain: turn-off-rest-api
-Version: 1.0.4
+Version: 1.0.5
+Requires at least: 4.7
+Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 Domain Path: /lang
@@ -68,7 +70,7 @@ class turn_off_rest_api {
 		// Variables.
 		$this->settings = array(
 			'name'		 => __( 'Turn Off REST API', 'turn-off-rest-api' ),
-			'version'	 => '1.0.4',
+			'version'	 => '1.0.5',
 			'menu_slug'	 => 'turnoff_rest_api_settings',
 			'permission' => 'manage_options',
 			'basename'	 => plugin_basename( __FILE__ ),
@@ -139,6 +141,7 @@ class turn_off_rest_api {
 	*  @since	1.0.2
 	*/
 	private function grant_rest_api() {
+		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- 'tora' is this plugin's established public filter prefix since 1.0.2.
 		return (bool) apply_filters( 'tora_grant_rest_api', is_user_logged_in() );
 	}
 
@@ -150,7 +153,11 @@ class turn_off_rest_api {
 	*  @since	1.0.2
 	*/
 	private function get_current_route() {
-		$rest_route = $GLOBALS['wp']->query_vars['rest_route'];
+		// Guard against an unset global or missing query var (PHP 8+ would emit an
+		// "undefined array key" warning when the REST route is not present).
+		$rest_route = ( isset( $GLOBALS['wp'] ) && isset( $GLOBALS['wp']->query_vars['rest_route'] ) )
+			? $GLOBALS['wp']->query_vars['rest_route']
+			: '';
 		return ( empty( $rest_route ) || '/' == $rest_route ) ?
 			$rest_route :
 			untrailingslashit( $rest_route );
@@ -188,7 +195,7 @@ class turn_off_rest_api {
 	*  @since	1.0.2
 	*/
 	public function admin_page_url() {
-		add_options_page(
+		$this->settings['page_hook'] = add_options_page(
 			esc_html__( 'Turn Off REST API / Security Settings', 'turn-off-rest-api' ),
 			esc_html__( 'Turn Off REST API', 'turn-off-rest-api' ),
 			$this->settings['permission'], // capability
@@ -245,18 +252,21 @@ class turn_off_rest_api {
 		}
 
 		// Get all routes.
+		// Routes are stored html-encoded on purpose: is_allowed() htmlspecialchars_decode()s
+		// each pattern before matching, and the regex syntax (?P<id>...) must survive intact.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- esc_html() is the intended sanitizer for these route patterns.
 		$rest_api_routes = ( isset( $_POST['rest_api_routes'] ) ) ? array_map( 'esc_html', wp_unslash( $_POST['rest_api_routes'] ) ) : null;
 
 		// Restore default - reset.
 		if( empty( $rest_api_routes ) || isset( $_POST['reset'] ) ) {
 			delete_option( 'tora_allowed_route_list' );
-			add_settings_error( 'turn-off-rest-api-notices', esc_attr( 'settings_updated' ), esc_html__( 'Default settings restored.' ), 'updated' );
+			add_settings_error( 'turn-off-rest-api-notices', esc_attr( 'settings_updated' ), esc_html__( 'Default settings restored.', 'turn-off-rest-api' ), 'updated' );
 			return;
 		}
 
 		// Save.
 		update_option( 'tora_allowed_route_list', $rest_api_routes );
-		add_settings_error( 'turn-off-rest-api-notices', esc_attr( 'settings_updated' ), esc_html__( 'Settings saved.' ), 'updated' );
+		add_settings_error( 'turn-off-rest-api-notices', esc_attr( 'settings_updated' ), esc_html__( 'Settings saved.', 'turn-off-rest-api' ), 'updated' );
 	}
 
 	/*
@@ -266,13 +276,17 @@ class turn_off_rest_api {
 	*  @date	09/27/17
 	*  @since	1.0.2
 	*/
-	public function admin_page_styles_scripts() {
-		// Style.
-		wp_register_style( 'tora-admin-base', plugin_dir_url( __FILE__ ) . 'assets/css/style.css', array(), $this->settings['version'] );
-		wp_enqueue_style( 'tora-admin-base' );
+	public function admin_page_styles_scripts( $hook ) {
+		// Only load on this plugin's own settings screen.
+		if( ! isset( $this->settings['page_hook'] ) || $hook !== $this->settings['page_hook'] ) {
+			return;
+		}
+
+		// Style (depends on dashicons for the header and status glyphs).
+		wp_enqueue_style( 'tora-admin', plugin_dir_url( __FILE__ ) . 'assets/css/style.css', array( 'dashicons' ), $this->settings['version'] );
 
 		// Script.
-		wp_enqueue_script( 'tora-admin-js', plugin_dir_url( __FILE__ ) . 'assets/js/script.js', array('jquery'), $this->settings['version'] );
+		wp_enqueue_script( 'tora-admin-js', plugin_dir_url( __FILE__ ) . 'assets/js/script.js', array( 'jquery' ), $this->settings['version'], true );
 	}
 
 	/*
@@ -285,7 +299,11 @@ class turn_off_rest_api {
 
 	private function return_error( $access ) {
 		$site_name = get_bloginfo( 'name' );
-		$error_message = esc_html__( "Only authenticated users are allowed to access {$site_name} WP REST API.", 'turn-off-rest-api' );
+		$error_message = sprintf(
+			/* translators: %s: site name */
+			esc_html__( 'Only authenticated users are allowed to access %s WP REST API.', 'turn-off-rest-api' ),
+			esc_html( $site_name )
+		);
 		if( is_wp_error( $access ) ) {
 			return $access->add( 'disabled', $error_message, array( 'status' => rest_authorization_required_code() ) );
 		}
