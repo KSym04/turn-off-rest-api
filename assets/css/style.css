@@ -163,3 +163,57 @@
 	outline-offset: 1px;
 	box-shadow: 0 0 0 1px var(--tora-focus);
 }
+
+/* Two-column layout: settings + DopeThemes aside */
+.tora-layout {
+	display: grid;
+	grid-template-columns: minmax( 0, 1fr ) 280px;
+	gap: var(--tora-space-6);
+	align-items: start;
+	margin-top: var(--tora-space-5);
+}
+
+.tora-main {
+	min-width: 0;
+}
+
+.tora-aside {
+	display: flex;
+	flex-direction: column;
+	gap: var(--tora-space-4);
+}
+
+.tora-box {
+	background: var(--tora-surface);
+	border: 1px solid var(--tora-line-soft);
+	border-radius: var(--tora-radius);
+	padding: var(--tora-space-5);
+}
+
+.tora-box h2 {
+	margin: 0 0 var(--tora-space-2);
+	font-size: var(--tora-text-lg);
+	color: var(--tora-ink);
+}
+
+.tora-box p {
+	margin: 0 0 var(--tora-space-4);
+	color: var(--tora-muted);
+	font-size: var(--tora-text-base);
+	line-height: 1.6;
+}
+
+.tora-box .button .dashicons {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+	vertical-align: text-bottom;
+	margin-left: var(--tora-space-1);
+}
+
+/* Stack on narrow screens */
+@media ( max-width: 782px ) {
+	.tora-layout {
+		grid-template-columns: 1fr;
+	}
+}

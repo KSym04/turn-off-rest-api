@@ -1,5 +1,8 @@
 *** Turn Off REST API Changelog ***
 
+2026.06.28 - version 1.1.1
+ * New - A "More on DopeThemes" panel on the settings screen with free plugins, code snippets, themes, and tutorials
+
 2026.06.25 - version 1.1.0
  * New - Site Health check that confirms the REST API is intentionally restricted, so it is never mistaken for an error
  * New - Option to show or hide the REST API discovery links and headers in your page source

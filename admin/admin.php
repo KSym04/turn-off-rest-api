@@ -103,6 +103,9 @@ function turn_off_rest_api_get_route_checkbox_prop( $route, $allowed_list_routes
 
 	<?php settings_errors( 'turn-off-rest-api-notices' ); ?>
 
+	<div class="tora-layout">
+	<div class="tora-main">
+
 	<div class="tora-callout">
 		<p>
 			<strong><?php esc_html_e( 'Unauthenticated access to the WP REST API is disabled by default.', 'turn-off-rest-api' ); ?></strong><br />
@@ -138,4 +141,17 @@ function turn_off_rest_api_get_route_checkbox_prop( $route, $allowed_list_routes
 			<?php submit_button( esc_html__( 'Reset', 'turn-off-rest-api' ), 'secondary', 'reset', false, array( 'onclick' => "return confirm('" . esc_js( __( 'Are you sure you want to restore default settings?', 'turn-off-rest-api' ) ) . "');" ) ); ?>
 		</div>
 	</form>
+	</div><!-- .tora-main -->
+
+	<aside class="tora-aside">
+		<div class="tora-box tora-more">
+			<h2><?php esc_html_e( 'More on DopeThemes', 'turn-off-rest-api' ); ?></h2>
+			<p><?php esc_html_e( 'Tutorials, code snippets, and more free plugins for WordPress and WooCommerce.', 'turn-off-rest-api' ); ?></p>
+			<a class="button" href="https://www.dopethemes.com/" target="_blank" rel="noopener noreferrer">
+				<?php esc_html_e( 'Visit DopeThemes', 'turn-off-rest-api' ); ?>
+				<span class="dashicons dashicons-external" aria-hidden="true"></span>
+			</a>
+		</div>
+	</aside>
+	</div><!-- .tora-layout -->
 </div>

@@ -6,7 +6,7 @@ Description: Prevents unauthorized requests from using the WP REST API.
 Author: DopeThemes
 Author URI: https://www.dopethemes.com/
 Text Domain: turn-off-rest-api
-Version: 1.1.0
+Version: 1.1.1
 Requires at least: 4.7
 Requires PHP: 7.4
 License: GPLv3
@@ -70,7 +70,7 @@ class turn_off_rest_api {
 		// Variables.
 		$this->settings = array(
 			'name'		 => __( 'Turn Off REST API', 'turn-off-rest-api' ),
-			'version'	 => '1.1.0',
+			'version'	 => '1.1.1',
 			'menu_slug'	 => 'turnoff_rest_api_settings',
 			'permission' => 'manage_options',
 			'basename'	 => plugin_basename( __FILE__ ),

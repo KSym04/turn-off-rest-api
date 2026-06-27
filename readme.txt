@@ -4,7 +4,7 @@ Tags: disable rest api, rest api, security, json, wp-json
 Requires at least: 4.7
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -80,6 +80,9 @@ Yes. Use the `tora_grant_rest_api` filter to return true or false based on your 
 
 == Changelog ==
 
+= 1.1.1 =
+* New - A "More on DopeThemes" panel on the settings screen with free plugins, code snippets, themes, and tutorials. No change to how the REST API is protected.
+
 = 1.1.0 =
 * New - Site Health check that confirms the REST API is intentionally restricted, so it is never mistaken for an error.
 * New - Option to show or hide the REST API discovery links and headers in your page source.
@@ -115,6 +118,9 @@ Yes. Use the `tora_grant_rest_api` filter to return true or false based on your 
 * Initial Release
 
 == Upgrade Notice ==
+
+= 1.1.1 =
+Adds a More on DopeThemes panel to the settings screen. No functional changes to the REST API protection.
 
 = 1.1.0 =
 Adds a Site Health check and an option to control the REST API discovery links and headers. A safe, additive update.
