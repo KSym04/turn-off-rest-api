@@ -4,7 +4,7 @@ Tags: disable rest api, rest api, security, json, wp-json
 Requires at least: 4.7
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.2
+Stable tag: 1.1.3
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -79,6 +79,11 @@ Yes. Use the `tora_grant_rest_api` filter to return true or false based on your 
 1. The settings screen, where you can allow specific REST API routes while everything else stays blocked.
 
 == Changelog ==
+
+= 1.1.3 =
+* Fixed - WordPress 6.7 and newer logged a "translation loading was triggered too early" notice for this plugin on sites with debugging enabled. The plugin name was being translated while the plugin loaded, before WordPress is ready to serve translations.
+* Tweak - the version used to cache bust the settings screen assets now comes from a single source, so it can never fall out of step with the plugin version again.
+* No change to how the REST API is protected.
 
 = 1.1.2 =
 * Tested with WordPress 7.1.

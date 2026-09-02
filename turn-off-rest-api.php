@@ -6,7 +6,7 @@ Description: Prevents unauthorized requests from using the WP REST API.
 Author: DopeThemes
 Author URI: https://www.dopethemes.com/
 Text Domain: turn-off-rest-api
-Version: 1.1.2
+Version: 1.1.3
 Requires at least: 4.7
 Requires PHP: 7.4
 License: GPLv3
@@ -37,6 +37,15 @@ if( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly.
 if( ! class_exists( 'turn_off_rest_api' ) ) :
 
 class turn_off_rest_api {
+
+	/**
+	 * Plugin version. Single source of truth for the settings array and for the
+	 * cache-busting version passed to wp_enqueue_style() / wp_enqueue_script(),
+	 * so a release bump cannot leave browsers serving stale assets.
+	 *
+	 * @var string
+	 */
+	var $version = '1.1.3';
 
 	/**
 	 * Plugin paths and URLs, populated in initialize().
@@ -78,9 +87,14 @@ class turn_off_rest_api {
 	*/
 	public function initialize() {
 		// Variables.
+		// 'name' is deliberately NOT translated here. initialize() runs at plugin load,
+		// long before the init action, so a translation call would force WordPress to load
+		// the text domain just in time. Since 6.7 that emits a _load_textdomain_just_in_time
+		// "called incorrectly" notice on every debug-enabled site. The plugin name is a
+		// proper noun anyway; translate at the point of output if it is ever displayed.
 		$this->settings = array(
-			'name'		 => __( 'Turn Off REST API', 'turn-off-rest-api' ),
-			'version'	 => '1.1.2',
+			'name'		 => 'Turn Off REST API',
+			'version'	 => $this->version,
 			'menu_slug'	 => 'turnoff_rest_api_settings',
 			'permission' => 'manage_options',
 			'basename'	 => plugin_basename( __FILE__ ),
