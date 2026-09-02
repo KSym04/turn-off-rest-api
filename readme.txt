@@ -2,9 +2,9 @@
 Contributors: ksym04
 Tags: disable rest api, rest api, security, json, wp-json
 Requires at least: 4.7
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -79,6 +79,12 @@ Yes. Use the `tora_grant_rest_api` filter to return true or false based on your 
 1. The settings screen, where you can allow specific REST API routes while everything else stays blocked.
 
 == Changelog ==
+
+= 1.1.2 =
+* Tested with WordPress 7.1.
+* Fixed - a PHP notice on PHP 8.2 and newer, caused by a plugin property being created on the fly instead of being declared. On a future PHP 9 this would have stopped the plugin from loading.
+* Fixed - the settings screen stylesheet and script were still labelled with the previous version number, so browsers could keep serving the old cached files after an update.
+* No change to how the REST API is protected.
 
 = 1.1.1 =
 * New - A "More on DopeThemes" panel on the settings screen with free plugins, code snippets, themes, and tutorials. No change to how the REST API is protected.
