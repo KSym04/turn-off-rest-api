@@ -3,9 +3,9 @@
 **Contributors:** ksym04\
 **Tags:** disable rest api, rest api, security, json, wp-json\
 **Requires at least:** 4.7\
-**Tested up to:** 7.0\
+**Tested up to:** 7.1\
 **Requires PHP:** 7.4\
-**Stable tag:** 1.1.0\
+**Stable tag:** 1.1.4\
 **License:** GPLv3\
 **License URI:** [https://www.gnu.org/licenses/gpl-3.0.html](https://www.gnu.org/licenses/gpl-3.0.html)
 
@@ -13,7 +13,9 @@ Disable the WordPress REST API for logged out visitors and lock down your /wp-js
 
 ## Description ##
 
-Turn Off REST API blocks the WordPress REST API for visitors who are not logged in. Anonymous requests to your `/wp-json` endpoints receive an authentication error instead of your site data, while logged in users and your own theme and plugins keep working normally.
+Turn Off REST API blocks the WordPress REST API for visitors who are not logged in. Anonymous requests to your `/wp-json` endpoints receive an authentication error instead of your site data, while logged in users, the block editor, and your admin area keep working normally.
+
+Because every route is blocked for logged out visitors by default, features that call the REST API on behalf of visitors stop working for them until you allow their routes. This includes the WooCommerce Cart and Checkout blocks and Contact Form 7 form submissions. The FAQ below shows exactly which routes to allow.
 
 By default WordPress exposes a lot of information through the REST API, including the list of user accounts, published content, and details about your site. For many sites that anonymous access is unnecessary and only widens the attack surface. This plugin closes it in one click and gives you a clear settings screen to reopen only the specific routes you actually need.
 
@@ -45,7 +47,7 @@ add_filter( 'tora_grant_rest_api', function ( $granted ) {
 1. In your WordPress admin, go to Plugins, then Add New.
 2. Search for "Turn Off REST API".
 3. Click Install Now, then Activate.
-4. Go to Settings, then Turn Off REST API to review the route allow list. Unauthenticated access is disabled by default.
+4. Go to Settings, then Turn Off REST API to review the route allow list. Unauthenticated access is disabled by default. If your site uses the WooCommerce Cart or Checkout blocks or Contact Form 7, allow their routes as described in the FAQ.
 
 Manual installation:
 
@@ -67,11 +69,47 @@ No. The block editor runs as a logged in user, so it keeps full REST API access.
 
 Yes. Open Settings, then Turn Off REST API, check the route or namespace you want to keep open, and save. Everything else stays blocked.
 
+### My WooCommerce cart or checkout, or my Contact Form 7 form, stopped working for visitors. How do I fix it? ###
+
+These features send REST API requests on behalf of logged out visitors, and the plugin blocks every route for visitors until you allow it. The WooCommerce Cart and Checkout blocks use the routes under `/wc/store/v1`. Contact Form 7 sends each form submission through its own routes under `/contact-form-7/v1`.
+
+1. Go to Settings, then Turn Off REST API.
+2. Under Allowed REST API Routes, find the `/wc/store/v1` heading and check its box. This also checks every route listed under it. The separate `/wc/store` heading above it is not used by the blocks.
+3. For Contact Form 7, find the `/contact-form-7/v1` heading and check only the three routes under it that end in `/feedback`, `/feedback/schema`, and `/refill`.
+4. Click Save Changes.
+
+Only the routes you check are opened, and everything else stays blocked. If a later WooCommerce or Contact Form 7 update adds a new route, come back to this screen and check it as well.
+
 ### Does it work on nginx as well as Apache? ###
 
 Yes. The plugin works at the WordPress request level and does not depend on any web server configuration files.
 
 ## Changelog ##
+
+### 1.1.4 ###
+
+* Tested with WordPress 7.1.2.
+* Fixed - security: when another security plugin or your own code had already blocked a REST API request from a logged out visitor, this plugin could lift that block and let the request through. The earlier block is now always kept.
+* Fixed - the option to hide REST API discovery links and headers now also removes the REST API link that WordPress sends in the headers of every page. Before, only the links in the page source were removed.
+* Fixed - the settings screen no longer stops with an error when a save request contains malformed route data. Such a request is treated like one with no routes ticked.
+* Tweak - removed support code for WordPress versions older than 4.7, which the plugin already required.
+
+### 1.1.3 ###
+
+* Fixed - WordPress 6.7 and newer logged a "translation loading was triggered too early" notice for this plugin on sites with debugging enabled. The plugin name was being translated while the plugin loaded, before WordPress is ready to serve translations.
+* Tweak - the version used to cache bust the settings screen assets now comes from a single source, so it can never fall out of step with the plugin version again.
+* No change to how the REST API is protected.
+
+### 1.1.2 ###
+
+* Tested with WordPress 7.1.
+* Fixed - a PHP notice on PHP 8.2 and newer, caused by a plugin property being created on the fly instead of being declared. On a future PHP 9 this would have stopped the plugin from loading.
+* Fixed - the settings screen stylesheet and script were still labelled with the previous version number, so browsers could keep serving the old cached files after an update.
+* No change to how the REST API is protected.
+
+### 1.1.1 ###
+
+* New - A "More on DopeThemes" panel on the settings screen with free plugins, code snippets, themes, and tutorials. No change to how the REST API is protected.
 
 ### 1.1.0 ###
 

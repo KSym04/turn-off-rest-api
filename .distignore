@@ -39,6 +39,11 @@ README.md
 readme.md
 docs/
 
+# Superseded changelog. readme.txt is the single authoritative changelog for
+# WordPress.org; changelog.txt had frozen at 1.1.1 while readme.txt ran on,
+# so shipping both put two contradicting histories in one directory.
+changelog.txt
+
 # PHP / JS tooling and manifests
 composer.json
 composer.lock

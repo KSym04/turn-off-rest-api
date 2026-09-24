@@ -6,7 +6,7 @@ Description: Prevents unauthorized requests from using the WP REST API.
 Author: DopeThemes
 Author URI: https://www.dopethemes.com/
 Text Domain: turn-off-rest-api
-Version: 1.1.3
+Version: 1.1.4
 Requires at least: 4.7
 Requires PHP: 7.4
 License: GPLv3
@@ -45,7 +45,7 @@ class turn_off_rest_api {
 	 *
 	 * @var string
 	 */
-	var $version = '1.1.3';
+	var $version = '1.1.4';
 
 	/**
 	 * Plugin paths and URLs, populated in initialize().
@@ -120,26 +120,22 @@ class turn_off_rest_api {
 	*/
 	public function disable_api_request() {
 		// Hide REST API discovery links and headers from the page source (optional, on by default).
+		// remove_action() only works when it names the priority core used in add_action():
+		// core sends the REST Link header on template_redirect at priority 11, and prints the
+		// oEmbed discovery links on wp_head at priority 4 (the priority 10 copy is back-compat).
+		// The default priority removals are kept so nothing that already worked changes.
 		if( $this->get_settings( 'hide_discovery' ) ) {
 			remove_action( 'xmlrpc_rsd_apis', 'rest_output_rsd' );
 			remove_action( 'wp_head', 'rest_output_link_wp_head' );
 			remove_action( 'wp_head', 'wp_oembed_add_discovery_links' );
+			remove_action( 'wp_head', 'wp_oembed_add_discovery_links', 4 );
 			remove_action( 'template_redirect', 'rest_output_link_header' );
+			remove_action( 'template_redirect', 'rest_output_link_header', 11 );
 		}
 
-		// Detect WordPress version.
-		$wordpress_current_version = get_bloginfo( 'version' );
-		if( version_compare( $wordpress_current_version, '4.7', '>=' ) ) {
-			// allowed routes checkpoint
-			add_filter( 'rest_authentication_errors', array( $this, 'allowed_routes_checkpoint') );
-		} else {
-			// WP REST API v1
-			add_filter( 'json_enabled', '__return_false' );
-			add_filter( 'json_jsonp_enabled', '__return_false' );
-			// WP REST API v2
-			add_filter( 'rest_enabled', '__return_false' );
-			add_filter( 'rest_jsonp_enabled', '__return_false' );
-		}
+		// Allowed routes checkpoint. The plugin requires WordPress 4.7 or newer, where
+		// rest_authentication_errors is the supported way to refuse a REST API request.
+		add_filter( 'rest_authentication_errors', array( $this, 'allowed_routes_checkpoint') );
 	}
 
 	/*
@@ -348,8 +344,12 @@ class turn_off_rest_api {
 		// Get all routes.
 		// Routes are stored html-encoded on purpose: is_allowed() htmlspecialchars_decode()s
 		// each pattern before matching, and the regex syntax (?P<id>...) must survive intact.
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- esc_html() is the intended sanitizer for these route patterns.
-		$rest_api_routes = ( isset( $_POST['rest_api_routes'] ) ) ? array_map( 'esc_html', wp_unslash( $_POST['rest_api_routes'] ) ) : null;
+		// The form always posts rest_api_routes[] as a list of strings. Anything else (a scalar,
+		// or nested arrays inside the list) can only come from a crafted request and is treated
+		// as not submitted, so it can never reach array_map() / esc_html() with the wrong type.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- type-checked below; esc_html() is the intended sanitizer for these route patterns.
+		$posted_routes   = isset( $_POST['rest_api_routes'] ) ? wp_unslash( $_POST['rest_api_routes'] ) : null;
+		$rest_api_routes = is_array( $posted_routes ) ? array_map( 'esc_html', array_values( array_filter( $posted_routes, 'is_string' ) ) ) : null;
 
 		// Restore default - reset.
 		if( empty( $rest_api_routes ) || isset( $_POST['reset'] ) ) {
@@ -399,7 +399,12 @@ class turn_off_rest_api {
 			esc_html( $site_name )
 		);
 		if( is_wp_error( $access ) ) {
-			return $access->add( 'disabled', $error_message, array( 'status' => rest_authorization_required_code() ) );
+			// An earlier check already refused this request. Keep that refusal and add this
+			// plugin's reason to it. WP_Error::add() returns nothing, so the error object itself
+			// must be returned: returning the add() result would hand core null and let the
+			// request through.
+			$access->add( 'disabled', $error_message, array( 'status' => rest_authorization_required_code() ) );
+			return $access;
 		}
 
 		return new WP_Error( 'disabled', $error_message, array( 'status' => rest_authorization_required_code() ) );
