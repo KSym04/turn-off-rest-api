@@ -23,6 +23,11 @@
 	/* Success */
 	--tora-success: #0a6b27;
 
+	/* Warning (blocked guest feature, filter opened the API) */
+	--tora-warning: #8a4600;
+	--tora-warning-bg: #fcf3e6;
+	--tora-warning-border: #f0c98a;
+
 	/* Type */
 	--tora-text-sm: 12px;
 	--tora-text-base: 13px;
@@ -97,6 +102,36 @@
 
 .tora-status .dashicons {
 	color: var(--tora-success);
+}
+
+.tora-status--warning,
+.tora-status--warning .dashicons {
+	color: var(--tora-warning);
+}
+
+/* Warning callout: a guest feature of another plugin is blocked */
+.tora-callout--warning {
+	background: var(--tora-warning-bg);
+	border-color: var(--tora-warning-border);
+	border-left-color: var(--tora-warning);
+}
+
+.tora-callout__routes {
+	margin: var(--tora-space-2) 0;
+	font-size: var(--tora-text-sm);
+}
+
+.tora-callout__routes summary {
+	cursor: pointer;
+	color: var(--tora-muted);
+}
+
+.tora-callout__routes ul {
+	margin: var(--tora-space-2) 0 0 var(--tora-space-4);
+}
+
+.tora-callout__form {
+	margin-top: var(--tora-space-2);
 }
 
 /* Sections / cards */

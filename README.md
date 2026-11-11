@@ -5,7 +5,7 @@
 **Requires at least:** 4.7\
 **Tested up to:** 7.1\
 **Requires PHP:** 7.4\
-**Stable tag:** 1.1.4\
+**Stable tag:** 1.1.5\
 **License:** GPLv3\
 **License URI:** [https://www.gnu.org/licenses/gpl-3.0.html](https://www.gnu.org/licenses/gpl-3.0.html)
 
@@ -85,6 +85,16 @@ Only the routes you check are opened, and everything else stays blocked. If a la
 Yes. The plugin works at the WordPress request level and does not depend on any web server configuration files.
 
 ## Changelog ##
+
+### 1.1.5 ###
+
+* New - When WooCommerce is active and its cart and checkout routes are blocked, the settings screen explains that logged out shoppers cannot use the Cart and Checkout blocks, and offers one button that allows only the Store API routes those blocks use (cart, checkout, order, and batch).
+* New - The WooCommerce Store API routes (/wc/store/v1) now appear in the route list. WooCommerce does not load them in the dashboard, so before this they could not be ticked here.
+* New - The same one-click fix for Contact Form 7, which needs its form feedback routes to send forms for logged out visitors.
+* New - Right after activation, a one-time notice on the Plugins screen says the REST API is now blocked for logged out visitors, with links to the settings and to a quick test.
+* Fixed - security: an allowed batch route (the WordPress /batch/v1 route or the WooCommerce /wc/store/v1/batch route) let logged out visitors reach routes inside the batch that were not allowed. Every request inside a batch is now checked against your allow list, and a batch that asks for any route you have not allowed is refused as a whole before it runs.
+* Fixed - When code on the site used the tora_grant_rest_api filter to open the REST API to everyone, the settings screen and Site Health still said it was restricted. Both now report the real state.
+* Fixed - Saving the settings with no route ticked showed "Default settings restored" instead of "Settings saved".
 
 ### 1.1.4 ###
 

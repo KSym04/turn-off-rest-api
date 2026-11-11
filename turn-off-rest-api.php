@@ -6,7 +6,7 @@ Description: Prevents unauthorized requests from using the WP REST API.
 Author: DopeThemes
 Author URI: https://www.dopethemes.com/
 Text Domain: turn-off-rest-api
-Version: 1.1.4
+Version: 1.1.5
 Requires at least: 4.7
 Requires PHP: 7.4
 License: GPLv3
@@ -45,7 +45,7 @@ class turn_off_rest_api {
 	 *
 	 * @var string
 	 */
-	var $version = '1.1.4';
+	var $version = '1.1.5';
 
 	/**
 	 * Plugin paths and URLs, populated in initialize().
@@ -109,6 +109,233 @@ class turn_off_rest_api {
 
 		// Site Health transparency: explains the REST restriction so it never looks like a fault.
 		add_filter( 'site_status_tests', array( $this, 'add_site_health_test') );
+
+		// One-click allow for routes that guest checkout and contact forms depend on.
+		add_action( 'admin_post_tora_allow_integration', array( $this, 'admin_allow_integration_routes' ) );
+
+		// One-time notice on the Plugins screen right after activation.
+		register_activation_hook( __FILE__, array( __CLASS__, 'activate' ) );
+		add_action( 'load-plugins.php', array( $this, 'maybe_queue_activation_notice' ) );
+	}
+
+	/**
+	 * Activation callback.
+	 *
+	 * Flags the one-time "REST API is now blocked" notice for the Plugins screen.
+	 * Skipped for WP-CLI (nobody is looking at the Plugins screen) and for
+	 * network-wide activation (the network Plugins screen is a different screen).
+	 *
+	 * @since 1.1.5
+	 *
+	 * @param bool $network_wide Whether the plugin is being network activated.
+	 * @return void
+	 */
+	public static function activate( $network_wide = false ) {
+		if( ( defined( 'WP_CLI' ) && WP_CLI ) || $network_wide ) {
+			return;
+		}
+		update_option( 'tora_activation_notice', '1', false );
+	}
+
+	/**
+	 * Queue the activation notice. Hooked to load-plugins.php, so the notice can
+	 * only ever print on the Plugins screen.
+	 *
+	 * The flag is left in place for users without manage_options, so the first
+	 * administrator who opens the Plugins screen still sees it once.
+	 *
+	 * @since 1.1.5
+	 *
+	 * @return void
+	 */
+	public function maybe_queue_activation_notice() {
+		if( is_network_admin() || ! current_user_can( $this->settings['permission'] ) ) {
+			return;
+		}
+		if( '1' !== get_option( 'tora_activation_notice' ) ) {
+			return;
+		}
+		add_action( 'admin_notices', array( $this, 'render_activation_notice' ) );
+	}
+
+	/**
+	 * Print the activation notice and consume the flag, so it never repeats.
+	 *
+	 * @since 1.1.5
+	 *
+	 * @return void
+	 */
+	public function render_activation_notice() {
+		delete_option( 'tora_activation_notice' );
+
+		printf(
+			'<div class="notice notice-info is-dismissible"><p><strong>%1$s</strong> %2$s</p><p><a class="button button-primary" href="%3$s">%4$s</a> <a class="button" href="%5$s" target="_blank" rel="noopener noreferrer">%6$s</a> <span class="description">%7$s</span></p></div>',
+			esc_html__( 'Turn Off REST API is on.', 'turn-off-rest-api' ),
+			esc_html__( 'The REST API is now blocked for logged out visitors. Logged in users and the block editor are unaffected.', 'turn-off-rest-api' ),
+			esc_url( admin_url( 'options-general.php?page=' . $this->settings['menu_slug'] ) ),
+			esc_html__( 'Review settings', 'turn-off-rest-api' ),
+			esc_url( rest_url() ),
+			esc_html__( 'Test it', 'turn-off-rest-api' ),
+			esc_html__( 'Open the test link in a private window to see what logged out visitors get. In this window you are logged in, so it stays open.', 'turn-off-rest-api' )
+		);
+	}
+
+	/**
+	 * Plugins whose front end needs specific REST routes for logged out visitors.
+	 *
+	 * Each pattern selects the minimum registered route keys the plugin's guest
+	 * features call: the WooCommerce Store API cart, checkout, order (pay for
+	 * order) and batch routes used by the Cart and Checkout blocks, and the
+	 * Contact Form 7 submit, validation schema and captcha refill routes.
+	 *
+	 * @since 1.1.5
+	 *
+	 * @return array Map of integration key => array( 'active' => bool, 'pattern' => regex ).
+	 */
+	public function get_guest_integrations() {
+		return array(
+			'woocommerce'    => array(
+				'active'  => class_exists( 'WooCommerce' ),
+				'pattern' => '#^/wc/store/v1/(?:batch|cart|checkout|order)(?:/|$)#',
+			),
+			'contact-form-7' => array(
+				'active'  => defined( 'WPCF7_VERSION' ),
+				'pattern' => '#^/contact-form-7/v1/contact-forms/[^/]+/(?:feedback|feedback/schema|refill)$#',
+			),
+		);
+	}
+
+	/**
+	 * WooCommerce Store API route keys that the REST server does not list on this request.
+	 *
+	 * WooCommerce only registers its Store API (/wc/store/v1) outside wp-admin, so
+	 * the settings screen cannot see those routes through rest_get_server(). This
+	 * asks WooCommerce for the same route paths from its own route map, without
+	 * registering anything, so the screen can show them and keep them on save.
+	 *
+	 * @since 1.1.5
+	 *
+	 * @return string[] Raw route keys, empty when WooCommerce is absent, the routes
+	 *                  are already registered, or the route map cannot be read.
+	 */
+	public function get_unlisted_store_api_routes() {
+		if( ! class_exists( 'WooCommerce' )
+			|| ! class_exists( '\Automattic\WooCommerce\StoreApi\StoreApi' )
+			|| ! class_exists( '\Automattic\WooCommerce\StoreApi\RoutesController' ) ) {
+			return array();
+		}
+
+		$registered = array_keys( rest_get_server()->get_routes() );
+		if( ! empty( preg_grep( '#^/wc/store/v1/#', $registered ) ) ) {
+			return array();
+		}
+
+		try {
+			$controller = \Automattic\WooCommerce\StoreApi\StoreApi::container()->get( \Automattic\WooCommerce\StoreApi\RoutesController::class );
+			$routes     = array_keys( (array) $controller->get_all_routes( 'v1' ) );
+		} catch ( \Throwable $e ) {
+			// The route map is WooCommerce internals; if it changes shape, show nothing extra.
+			return array();
+		}
+
+		return array_values( array_filter( $routes, function ( $route ) {
+			return is_string( $route ) && 0 === strpos( $route, '/wc/store/v1/' );
+		} ) );
+	}
+
+	/**
+	 * REST route keys an active integration needs.
+	 *
+	 * @since 1.1.5
+	 *
+	 * @param string $key Integration key from get_guest_integrations().
+	 * @return string[] Raw route keys, as rest_get_server()->get_routes() returns them,
+	 *                  plus the Store API keys WooCommerce does not register in wp-admin.
+	 */
+	public function get_integration_routes( $key ) {
+		$integrations = $this->get_guest_integrations();
+		if( ! isset( $integrations[ $key ] ) || ! $integrations[ $key ]['active'] ) {
+			return array();
+		}
+		$routes = array_unique( array_merge(
+			array_keys( rest_get_server()->get_routes() ),
+			$this->get_unlisted_store_api_routes()
+		) );
+		return array_values( preg_grep( $integrations[ $key ]['pattern'], $routes ) );
+	}
+
+	/**
+	 * Integration routes that are not on the allow list yet.
+	 *
+	 * Uses the same stored form as the settings checkboxes (esc_html() of the
+	 * route key), so a route ticked by hand counts as allowed here too.
+	 *
+	 * @since 1.1.5
+	 *
+	 * @param string $key Integration key from get_guest_integrations().
+	 * @return string[] Raw route keys still blocked for logged out visitors.
+	 */
+	public function get_blocked_integration_routes( $key ) {
+		$allowed = $this->get_route_whitelist_option();
+		$blocked = array();
+		foreach( $this->get_integration_routes( $key ) as $route ) {
+			if( ! in_array( esc_html( $route ), $allowed, true ) ) {
+				$blocked[] = $route;
+			}
+		}
+		return $blocked;
+	}
+
+	/**
+	 * admin-post handler: add one integration's blocked routes to the allow list.
+	 *
+	 * @since 1.1.5
+	 *
+	 * @return void Redirects back to the settings screen.
+	 */
+	public function admin_allow_integration_routes() {
+		if( ! current_user_can( $this->settings['permission'] ) ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to change these settings.', 'turn-off-rest-api' ), '', array( 'response' => 403 ) );
+		}
+
+		$key          = isset( $_POST['tora_integration'] ) ? sanitize_key( wp_unslash( $_POST['tora_integration'] ) ) : '';
+		$integrations = $this->get_guest_integrations();
+		if( ! isset( $integrations[ $key ] ) ) {
+			wp_die( esc_html__( 'Unknown request.', 'turn-off-rest-api' ), '', array( 'response' => 400 ) );
+		}
+
+		check_admin_referer( 'tora_allow_integration_' . $key, '_tora_nonce_' . $key );
+
+		$blocked = $this->get_blocked_integration_routes( $key );
+		if( ! empty( $blocked ) ) {
+			$allowed = $this->get_route_whitelist_option();
+			foreach( $blocked as $route ) {
+				$allowed[] = esc_html( $route );
+			}
+			update_option( 'tora_allowed_route_list', array_values( array_unique( $allowed ) ) );
+		}
+
+		wp_safe_redirect( add_query_arg(
+			array(
+				'page'         => $this->settings['menu_slug'],
+				'tora-allowed' => $key,
+			),
+			admin_url( 'options-general.php' )
+		) );
+		exit;
+	}
+
+	/**
+	 * Whether the REST API is open to logged out visitors because the
+	 * tora_grant_rest_api filter says so. Runs the same filter the blocker runs,
+	 * with the logged out value, so admin screens report the real visitor state.
+	 *
+	 * @since 1.1.5
+	 *
+	 * @return bool True when logged out visitors are granted full REST access.
+	 */
+	public function is_rest_granted_for_guests() {
+		return $this->grant_rest_api( false );
 	}
 
 	/*
@@ -136,6 +363,151 @@ class turn_off_rest_api {
 		// Allowed routes checkpoint. The plugin requires WordPress 4.7 or newer, where
 		// rest_authentication_errors is the supported way to refuse a REST API request.
 		add_filter( 'rest_authentication_errors', array( $this, 'allowed_routes_checkpoint') );
+
+		// A batch request runs each of its sub-requests without the authentication check
+		// above, so an allowed batch route could reach routes that are not allowed. The
+		// whole batch is refused before it runs when any of its paths is not allowed, and
+		// every sub-request is checked again as it is dispatched.
+		add_filter( 'rest_request_before_callbacks', array( $this, 'batch_request_checkpoint' ), 10, 3 );
+		add_filter( 'rest_pre_dispatch', array( $this, 'batch_subrequest_checkpoint' ), 10, 3 );
+	}
+
+	/**
+	 * Whether a route is a batch route (core /batch/v1, or a batch route such as /wc/store/v1/batch).
+	 *
+	 * @since 1.1.5
+	 *
+	 * @param string $route Route without a trailing slash.
+	 * @return bool True for a batch route.
+	 */
+	private function is_batch_route( $route ) {
+		return '' !== $route && (bool) preg_match( '#(?:^|/)batch(?:/v1)?$#i', $route );
+	}
+
+	/**
+	 * Normalize a sub-request route for the allow list check.
+	 *
+	 * The REST index is kept as '/' (an empty route is the index too), so it is checked
+	 * against the allow list instead of being skipped. Every other route loses its
+	 * trailing slash, matching get_current_route().
+	 *
+	 * @since 1.1.5
+	 *
+	 * @param string $route Raw route.
+	 * @return string Normalized route, never empty.
+	 */
+	private function normalize_sub_route( $route ) {
+		$route = (string) $route;
+		if( '' === $route || '/' === $route ) {
+			return '/';
+		}
+		$route = untrailingslashit( $route );
+		return '' === $route ? '/' : $route;
+	}
+
+	/**
+	 * Refuse a whole batch request when any of its paths is not on the allow list.
+	 *
+	 * WordPress validates and sanitizes the parameters of every sub-request before any of
+	 * them is dispatched, so the per sub-request check in batch_subrequest_checkpoint()
+	 * runs too late to keep a logged out visitor from reaching those callbacks on routes
+	 * that are not allowed. This runs on the outer batch request, before its callback
+	 * starts the batch, and refuses it as a whole.
+	 *
+	 * @since 1.1.5
+	 *
+	 * @param WP_REST_Response|WP_HTTP_Response|WP_Error|mixed $response Result to send, usually null.
+	 * @param array                                            $handler  Route handler used for the request.
+	 * @param WP_REST_Request                                  $request  Request used to generate the response.
+	 * @return mixed The unchanged $response, or a 401 WP_Error for a refused batch.
+	 */
+	public function batch_request_checkpoint( $response, $handler, $request ) {
+		// An earlier step already failed, or this visitor has full access.
+		if( is_wp_error( $response ) || ! ( $request instanceof WP_REST_Request ) || $this->grant_rest_api() ) {
+			return $response;
+		}
+
+		// Only the outer batch request of this HTTP request is checked here.
+		$outer_route = $this->get_current_route();
+		$route       = untrailingslashit( (string) $request->get_route() );
+		if( ! $this->is_batch_route( $outer_route ) || 0 !== strcasecmp( $route, $outer_route ) ) {
+			return $response;
+		}
+
+		$items = $request->get_param( 'requests' );
+		if( ! is_array( $items ) ) {
+			return $response;
+		}
+
+		foreach( $items as $item ) {
+			// Core reads each path with wp_parse_url() and uses only its path part.
+			$path  = ( is_array( $item ) && isset( $item['path'] ) && is_string( $item['path'] ) ) ? $item['path'] : '';
+			$parts = '' !== $path ? wp_parse_url( $path ) : false;
+			$sub   = ( is_array( $parts ) && isset( $parts['path'] ) ) ? $this->normalize_sub_route( $parts['path'] ) : '';
+
+			// An unreadable path, or a route that is not allowed, refuses the whole batch.
+			if( '' === $sub || ! $this->is_allowed( $sub ) ) {
+				return $this->return_error( null );
+			}
+		}
+
+		return $response;
+	}
+
+	/**
+	 * Refuse a batch sub-request whose route is not on the allow list.
+	 *
+	 * WordPress runs the sub-requests of a batch (core /batch/v1, and batch routes that
+	 * call the core batch server, such as the WooCommerce Store API /wc/store/v1/batch)
+	 * through rest_pre_dispatch but never through rest_authentication_errors. Without this
+	 * check, allowing a batch route would let logged out visitors reach every route that
+	 * accepts batching. Only sub-requests of a batch are checked: the outer request was
+	 * already checked by allowed_routes_checkpoint(), and REST requests made internally by
+	 * PHP while a normal page renders are left alone.
+	 *
+	 * @since 1.1.5
+	 *
+	 * @param mixed           $result  Response to replace the requested one with, or null.
+	 * @param WP_REST_Server  $server  Server instance.
+	 * @param WP_REST_Request $request Request used to generate the response.
+	 * @return mixed The unchanged $result, or a 401 WP_REST_Response for a refused sub-request.
+	 */
+	public function batch_subrequest_checkpoint( $result, $server, $request ) {
+		// Another callback already answered, or this visitor has full access.
+		if( null !== $result || ! ( $request instanceof WP_REST_Request ) || $this->grant_rest_api() ) {
+			return $result;
+		}
+
+		// Only act inside a batch request: the outer route must be a batch route.
+		$outer_route = $this->get_current_route();
+		if( ! $this->is_batch_route( $outer_route ) ) {
+			return $result;
+		}
+
+		// The outer batch request itself passes through; its own check already ran. The
+		// REST index stays '/' so it is checked like any other route.
+		$route = $this->normalize_sub_route( $request->get_route() );
+		if( 0 === strcasecmp( $route, $outer_route ) || $this->is_allowed( $route ) ) {
+			return $result;
+		}
+
+		// Core expects a response object here: it reads the status of each batch item,
+		// so a bare WP_Error would stop the whole batch with a fatal error.
+		$error = $this->return_error( null );
+		if( function_exists( 'rest_convert_error_to_response' ) ) {
+			return rest_convert_error_to_response( $error );
+		}
+
+		// WordPress 5.6 has batch requests but not the helper above (added in 5.7).
+		$response = new WP_REST_Response(
+			array(
+				'code'    => $error->get_error_code(),
+				'message' => $error->get_error_message(),
+				'data'    => $error->get_error_data(),
+			),
+			rest_authorization_required_code()
+		);
+		return $response;
 	}
 
 	/*
@@ -180,6 +552,26 @@ class turn_off_rest_api {
 	*  @since	1.1.0
 	*/
 	public function site_health_rest_test() {
+		// A tora_grant_rest_api filter can open the REST API to everyone. Report
+		// that honestly instead of claiming the restriction is in place.
+		if( $this->is_rest_granted_for_guests() ) {
+			return array(
+				'label'       => __( 'The REST API is open to logged out visitors', 'turn-off-rest-api' ),
+				'status'      => 'recommended',
+				'badge'       => array(
+					'label' => __( 'Security', 'turn-off-rest-api' ),
+					'color' => 'orange',
+				),
+				'description' => '<p>' . esc_html__( 'Turn Off REST API is active, but code on this site uses the tora_grant_rest_api filter to grant REST API access to logged out visitors, so no route is blocked. If that is not intended, remove the filter from your theme or custom plugin.', 'turn-off-rest-api' ) . '</p>',
+				'actions'     => sprintf(
+					'<p><a href="%1$s">%2$s</a></p>',
+					esc_url( admin_url( 'options-general.php?page=' . $this->settings['menu_slug'] ) ),
+					esc_html__( 'Review REST API settings', 'turn-off-rest-api' )
+				),
+				'test'        => 'tora_rest_restricted',
+			);
+		}
+
 		return array(
 			'label'       => __( 'The REST API is restricted to logged in users', 'turn-off-rest-api' ),
 			'status'      => 'good',
@@ -225,9 +617,14 @@ class turn_off_rest_api {
 	*  @date	09/27/17
 	*  @since	1.0.2
 	*/
-	private function grant_rest_api() {
+	private function grant_rest_api( $is_logged_in = null ) {
+		// The blocker passes nothing and gets the current request's login state.
+		// Admin screens pass false (since 1.1.5) to ask what a logged out visitor gets.
+		if( null === $is_logged_in ) {
+			$is_logged_in = is_user_logged_in();
+		}
 		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- 'tora' is this plugin's established public filter prefix since 1.0.2.
-		return (bool) apply_filters( 'tora_grant_rest_api', is_user_logged_in() );
+		return (bool) apply_filters( 'tora_grant_rest_api', (bool) $is_logged_in );
 	}
 
 	/*
@@ -300,6 +697,22 @@ class turn_off_rest_api {
 	*/
 	public function admin_settings_page() {
 		$this->admin_save_settings();
+
+		// Confirmation after the one-click allow redirect. Display only, no state change.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only notice selector, validated against a fixed list.
+		$allowed_key = isset( $_GET['tora-allowed'] ) ? sanitize_key( wp_unslash( $_GET['tora-allowed'] ) ) : '';
+		// Only confirm what is true right now: a bookmarked or hand-typed URL must not claim
+		// routes were allowed while some of them are still blocked.
+		$integrations = $this->get_guest_integrations();
+		if( '' !== $allowed_key && ( empty( $integrations[ $allowed_key ]['active'] ) || ! empty( $this->get_blocked_integration_routes( $allowed_key ) ) ) ) {
+			$allowed_key = '';
+		}
+		if( 'woocommerce' === $allowed_key ) {
+			add_settings_error( 'turn-off-rest-api-notices', 'tora_allowed_woocommerce', esc_html__( 'WooCommerce cart and checkout routes are now allowed for logged out visitors. All other routes stay blocked.', 'turn-off-rest-api' ), 'updated' );
+		} elseif( 'contact-form-7' === $allowed_key ) {
+			add_settings_error( 'turn-off-rest-api-notices', 'tora_allowed_contact_form_7', esc_html__( 'Contact Form 7 form routes are now allowed for logged out visitors. All other routes stay blocked.', 'turn-off-rest-api' ), 'updated' );
+		}
+
 		include( $this->settings['path'] . 'admin/admin.php' );
 	}
 
@@ -352,9 +765,16 @@ class turn_off_rest_api {
 		$rest_api_routes = is_array( $posted_routes ) ? array_map( 'esc_html', array_values( array_filter( $posted_routes, 'is_string' ) ) ) : null;
 
 		// Restore default - reset.
-		if( empty( $rest_api_routes ) || isset( $_POST['reset'] ) ) {
+		if( isset( $_POST['reset'] ) ) {
 			delete_option( 'tora_allowed_route_list' );
 			add_settings_error( 'turn-off-rest-api-notices', esc_attr( 'settings_updated' ), esc_html__( 'Default settings restored.', 'turn-off-rest-api' ), 'updated' );
+			return;
+		}
+
+		// Saved with no route ticked: an ordinary save that blocks every route.
+		if( empty( $rest_api_routes ) ) {
+			delete_option( 'tora_allowed_route_list' );
+			add_settings_error( 'turn-off-rest-api-notices', esc_attr( 'settings_updated' ), esc_html__( 'Settings saved.', 'turn-off-rest-api' ), 'updated' );
 			return;
 		}
 
