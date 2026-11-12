@@ -6,7 +6,7 @@ Description: Prevents unauthorized requests from using the WP REST API.
 Author: DopeThemes
 Author URI: https://www.dopethemes.com/
 Text Domain: turn-off-rest-api
-Version: 1.1.5
+Version: 1.1.6
 Requires at least: 4.7
 Requires PHP: 7.4
 License: GPLv3
@@ -45,7 +45,7 @@ class turn_off_rest_api {
 	 *
 	 * @var string
 	 */
-	var $version = '1.1.5';
+	var $version = '1.1.6';
 
 	/**
 	 * Plugin paths and URLs, populated in initialize().
@@ -56,6 +56,19 @@ class turn_off_rest_api {
 	 * @var array
 	 */
 	var $settings = array();
+
+	/**
+	 * Whether the outer REST request of this HTTP request has been answered.
+	 *
+	 * Set by mark_outer_request_dispatched(). Everything WordPress dispatches after that
+	 * point (the linked resources of a ?_embed request) is checked against the allow list
+	 * by embedded_request_checkpoint().
+	 *
+	 * @since 1.1.6
+	 *
+	 * @var bool
+	 */
+	private $outer_request_dispatched = false;
 
 	/*
 	*  __construct
@@ -370,6 +383,117 @@ class turn_off_rest_api {
 		// every sub-request is checked again as it is dispatched.
 		add_filter( 'rest_request_before_callbacks', array( $this, 'batch_request_checkpoint' ), 10, 3 );
 		add_filter( 'rest_pre_dispatch', array( $this, 'batch_subrequest_checkpoint' ), 10, 3 );
+
+		// With ?_embed, WordPress dispatches the linked resources (author, featured media,
+		// terms) after the outer request has been answered, again without the authentication
+		// check above. Those embedded requests are checked against the allow list too. Both
+		// run at the latest priority so callbacks added earlier on these filters do not
+		// change the result.
+		add_filter( 'rest_post_dispatch', array( $this, 'mark_outer_request_dispatched' ), PHP_INT_MAX, 3 );
+		add_filter( 'rest_pre_dispatch', array( $this, 'embedded_request_checkpoint' ), PHP_INT_MAX, 3 );
+	}
+
+	/**
+	 * Note that the outer REST request of this HTTP request has been answered.
+	 *
+	 * WordPress applies rest_post_dispatch to the outer request after its callback has
+	 * run and before it builds the embedded resources for ?_embed. REST requests that an
+	 * allowed route's callback makes internally run before this point, so they keep
+	 * working as before. REST requests made after this point, for example by a callback
+	 * on rest_pre_serve_request, are checked against the allow list for logged out
+	 * visitors. So are internal requests that follow a preload of the very same route
+	 * inside a callback, since rest_preload_api_request() also applies this filter.
+	 *
+	 * @since 1.1.6
+	 *
+	 * @param WP_HTTP_Response|mixed $response Result to send to the client.
+	 * @param WP_REST_Server         $server   Server instance.
+	 * @param WP_REST_Request        $request  Request used to generate the response.
+	 * @return WP_HTTP_Response|mixed The unchanged $response.
+	 */
+	public function mark_outer_request_dispatched( $response, $server, $request ) {
+		if( $this->outer_request_dispatched || ! ( $request instanceof WP_REST_Request ) ) {
+			return $response;
+		}
+
+		// Only a REST API HTTP request has an outer request. PHP code that calls the REST
+		// API while a normal page renders never sets the flag.
+		$outer_route = $this->get_current_route();
+		if( empty( $outer_route ) || ! is_string( $outer_route ) ) {
+			return $response;
+		}
+
+		if( 0 === strcasecmp( $this->normalize_sub_route( $request->get_route() ), $this->normalize_sub_route( $outer_route ) ) ) {
+			$this->outer_request_dispatched = true;
+		}
+
+		return $response;
+	}
+
+	/**
+	 * Refuse an embedded request whose route is not on the allow list.
+	 *
+	 * A ?_embed request asks WordPress to include linked resources in the response. Core
+	 * dispatches each of them internally through rest_pre_dispatch, never through
+	 * rest_authentication_errors, so allowing /wp/v2/posts used to hand logged out
+	 * visitors the embedded author, media and term data even when those routes were not
+	 * allowed. A refused resource shows up in _embedded as an error object with status
+	 * 401, the same shape core uses for any embedded resource the visitor cannot read.
+	 *
+	 * Batch requests are left to the batch checks, which already cover every request
+	 * dispatched inside them.
+	 *
+	 * @since 1.1.6
+	 *
+	 * @param mixed           $result  Response to replace the requested one with, or null.
+	 * @param WP_REST_Server  $server  Server instance.
+	 * @param WP_REST_Request $request Request used to generate the response.
+	 * @return mixed The unchanged $result, or a 401 WP_REST_Response for a refused request.
+	 */
+	public function embedded_request_checkpoint( $result, $server, $request ) {
+		// Nothing has been embedded yet, an earlier callback already refused the request,
+		// or this visitor has full access.
+		if( ! $this->outer_request_dispatched || is_wp_error( $result ) || ! ( $request instanceof WP_REST_Request ) || $this->grant_rest_api() ) {
+			return $result;
+		}
+
+		$outer_route = $this->get_current_route();
+		if( empty( $outer_route ) || ! is_string( $outer_route ) || $this->is_batch_route( $outer_route ) ) {
+			return $result;
+		}
+
+		// An allowed route keeps whatever earlier callbacks returned for it. A route that
+		// is not allowed is refused even when another callback supplied a response, the
+		// same way the outer request is refused before any callback runs.
+		if( $this->is_allowed( $this->normalize_sub_route( $request->get_route() ) ) ) {
+			return $result;
+		}
+
+		return $this->refusal_response();
+	}
+
+	/**
+	 * Build the 401 refusal as a response object, for filters that cannot take a WP_Error.
+	 *
+	 * @since 1.1.6
+	 *
+	 * @return WP_REST_Response The refusal, with the status from rest_authorization_required_code().
+	 */
+	private function refusal_response() {
+		$error = $this->return_error( null );
+		if( function_exists( 'rest_convert_error_to_response' ) ) {
+			return rest_convert_error_to_response( $error );
+		}
+
+		// WordPress 5.6 and older do not have the helper above (added in 5.7).
+		return new WP_REST_Response(
+			array(
+				'code'    => $error->get_error_code(),
+				'message' => $error->get_error_message(),
+				'data'    => $error->get_error_data(),
+			),
+			rest_authorization_required_code()
+		);
 	}
 
 	/**
@@ -493,21 +617,7 @@ class turn_off_rest_api {
 
 		// Core expects a response object here: it reads the status of each batch item,
 		// so a bare WP_Error would stop the whole batch with a fatal error.
-		$error = $this->return_error( null );
-		if( function_exists( 'rest_convert_error_to_response' ) ) {
-			return rest_convert_error_to_response( $error );
-		}
-
-		// WordPress 5.6 has batch requests but not the helper above (added in 5.7).
-		$response = new WP_REST_Response(
-			array(
-				'code'    => $error->get_error_code(),
-				'message' => $error->get_error_message(),
-				'data'    => $error->get_error_data(),
-			),
-			rest_authorization_required_code()
-		);
-		return $response;
+		return $this->refusal_response();
 	}
 
 	/*
@@ -627,22 +737,38 @@ class turn_off_rest_api {
 		return (bool) apply_filters( 'tora_grant_rest_api', (bool) $is_logged_in );
 	}
 
-	/*
-	*  get_current_route
-	*
-	*  @type	function
-	*  @date	09/27/17
-	*  @since	1.0.2
-	*/
+	/**
+	 * Get the route of the current REST request, normalized the way core serves it.
+	 *
+	 * Returns an empty string when the request carries no REST route (a normal page
+	 * load), so callers can skip their checks there. This follows rest_api_loaded():
+	 * core ignores an empty rest_route, trims trailing slashes and backslashes from any
+	 * other value, and serves the REST index when nothing is left. Before 1.1.6 a value
+	 * such as `//`, `%5C` or `0/` trimmed to an empty route here and skipped the allow
+	 * list while core served the index. Such a value is now returned as '/', so the
+	 * index is checked like any other route.
+	 *
+	 * @since 1.0.2
+	 * @since 1.1.6 A route that trims to nothing is returned as '/', as core serves it.
+	 *
+	 * @return string The current route, '/' for the index, or '' when there is none.
+	 */
 	private function get_current_route() {
 		// Guard against an unset global or missing query var (PHP 8+ would emit an
 		// "undefined array key" warning when the REST route is not present).
 		$rest_route = ( isset( $GLOBALS['wp'] ) && isset( $GLOBALS['wp']->query_vars['rest_route'] ) )
 			? $GLOBALS['wp']->query_vars['rest_route']
 			: '';
-		return ( empty( $rest_route ) || '/' == $rest_route ) ?
-			$rest_route :
-			untrailingslashit( $rest_route );
+
+		// Core does not serve the REST API for an empty value or a non-string one.
+		if( empty( $rest_route ) || ! is_string( $rest_route ) ) {
+			return '';
+		}
+
+		// Same steps and the same empty() test as rest_api_loaded(), so '0' after
+		// trimming is the index here exactly as it is in core.
+		$route = untrailingslashit( $rest_route );
+		return empty( $route ) ? '/' : $route;
 	}
 
 	/*

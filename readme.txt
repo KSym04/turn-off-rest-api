@@ -4,7 +4,7 @@ Tags: disable rest api, rest api, security, json, wp-json
 Requires at least: 4.7
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.5
+Stable tag: 1.1.6
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -79,6 +79,16 @@ These features send REST API requests on behalf of logged out visitors, and the 
 
 Only the routes you check are opened, and everything else stays blocked. If a later WooCommerce or Contact Form 7 update adds a new route, come back to this screen and check it as well.
 
+= My headless site or JavaScript theme stopped showing author names, featured images, or categories for visitors. How do I fix it? =
+
+When an app asks for posts with `?_embed`, WordPress adds the linked author, featured image, and terms to the response. Since version 1.1.6 each of those is checked against your allow list, so a route you have not allowed is no longer included for logged out visitors. Allow only the ones your site really shows:
+
+1. Go to Settings, then Turn Off REST API.
+2. Under `/wp/v2`, check `/wp/v2/media/(?P<id>[\d]+)` for featured images, `/wp/v2/categories` and `/wp/v2/tags` for terms, and the route of any custom taxonomy your posts use. Comments (`/wp/v2/comments`) and parent pages (`/wp/v2/pages/(?P<id>[\d]+)`) are embedded the same way, so check them only if your site shows them.
+3. Check `/wp/v2/users/(?P<id>[\d]+)` for author names only if you accept that it also lets anyone look up the public profile of each user who has published posts.
+4. Click Save Changes.
+5. If a caching plugin or CDN stores REST API responses for your site, clear that cache so visitors get responses built with the new settings.
+
 = Does it work on nginx as well as Apache? =
 
 Yes. The plugin works at the WordPress request level and does not depend on any web server configuration files.
@@ -92,6 +102,11 @@ Yes. Use the `tora_grant_rest_api` filter to return true or false based on your 
 1. A logged out visitor opening `/wp-json` gets an authentication error (status 401) instead of your site data.
 
 == Changelog ==
+
+= 1.1.6 =
+* Fixed - security: when you allowed a content route such as /wp/v2/posts, a logged out visitor could add ?_embed to the request and get the data of routes you had not allowed, such as the post author's user profile, the featured image, and the post's categories and tags. Each embedded item is now checked against your allow list too. An item from a route you have not allowed appears as an authentication error (status 401) inside the response instead of its data, and the rest of the response is unchanged.
+* Fixed - security: a REST API address made only of slashes or backslashes, such as ?rest_route=//, showed logged out visitors the list of every REST API route on your site even when that list was blocked. It is now blocked the same way as /wp-json/.
+* Note - if your site shows posts to logged out visitors through the REST API with ?_embed (a headless front end or a JavaScript theme), and it needs embedded author names, featured images, or terms, allow those routes as well. The FAQ explains how.
 
 = 1.1.5 =
 * New - When WooCommerce is active and its cart and checkout routes are blocked, the settings screen explains that logged out shoppers cannot use the Cart and Checkout blocks, and offers one button that allows only the Store API routes those blocks use (cart, checkout, order, and batch).
@@ -158,6 +173,9 @@ Yes. Use the `tora_grant_rest_api` filter to return true or false based on your 
 * Initial Release
 
 == Upgrade Notice ==
+
+= 1.1.6 =
+Security fixes: logged out visitors could use ?_embed to read routes you had not allowed, such as author profiles, and ?rest_route=// showed the route list. If a headless front end needs embedded authors, images, or terms, allow those routes too (see the FAQ).
 
 = 1.1.5 =
 Security fix: if you allowed a batch route, logged out visitors could reach routes inside the batch that you had not allowed. Also adds a one-click fix for the WooCommerce Cart and Checkout blocks and Contact Form 7. Updating is recommended.
